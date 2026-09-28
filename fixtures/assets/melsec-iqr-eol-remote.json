@@ -1,0 +1,48 @@
+{
+  "asset_id": "melsec-iqr-eol-remote",
+  "asset_type": "PLC",
+  "components": [
+    {
+      "evidence_id": "ev-walkdown-20260820",
+      "method": "manual",
+      "observed_at": "2026-08-20T09:00:00Z",
+      "type": "controller_firmware",
+      "version": {
+        "state": "unknown"
+      }
+    }
+  ],
+  "identity": {
+    "family_raw": "MELSEC iQ-R Series",
+    "model_raw": "MELSEC iQ-R Series R08/16/32/120PCPU firmware",
+    "vendor_raw": "Mitsubishi Electric"
+  },
+  "lifecycle_status": "EOL",
+  "location": {
+    "factory": "Factory-C",
+    "zone": "Cell-L5"
+  },
+  "network": {
+    "observed_peers": [
+      "ews-l3-002"
+    ],
+    "remote_access": {
+      "mfa": false,
+      "type": "vpn",
+      "vendor": "미상"
+    },
+    "services": [
+      {
+        "encrypted": false,
+        "port": 502,
+        "protocol": "modbus_tcp",
+        "role": "server"
+      }
+    ]
+  },
+  "operations": {
+    "safety_criticality": "high"
+  },
+  "synthetic": true,
+  "synthetic_note": "판정 커널 검증용으로 손으로 만든 픽스처입니다. 실제 현장 장비가 아닙니다."
+}

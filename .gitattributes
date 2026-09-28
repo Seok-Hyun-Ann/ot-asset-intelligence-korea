@@ -1,0 +1,24 @@
+# 줄바꿈을 LF 로 고정한다 (ADR-041). 이 저장소는 Windows 에서 만들어져 CRLF 49개 ·
+# LF 23개 · 혼용 1개였다. 고정하지 않으면 다른 OS 의 첫 커밋이 파일 전체를 바꾼 것처럼 보인다.
+* text=auto eol=lf
+*.py text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.toml text eol=lf
+*.html text eol=lf
+*.svg text eol=lf
+# 바이너리
+*.woff2 binary
+*.png binary
+*.docx binary
+*.db binary
+*.pcap binary
+
+# 해시로 계보를 잇는 **원문**은 git 이 바이트를 건드리면 안 된다 (ADR-041).
+# csaf.py 는 권고문 원문 바이트로, kev.py 는 스냅샷 원문 바이트로 sha256 을 만들고,
+# 그 값이 모든 decision 의 input_hash 에 들어간다. 줄바꿈이 바뀌면 다른 기계에서
+# '판정 재현 100%' 가 깨진다. 지금은 CR 0 이지만, 규칙으로 못 박는다.
+data/** -text

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OT 자산 취약점 관리</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<div id="root"><div class="sheet"><p class="spin">불러오는 중…</p></div></div>
+
+<!-- 표 27 이 지목한 라이브러리를 로컬에 반입해 쓴다. 외부 CDN 을 부르지 않는다.
+     node 가 없어 빌드 단계는 두지 않았고, JSX 대신 htm 태그 템플릿을 쓴다. -->
+<script src="/vendor/react.js"></script>
+<script src="/vendor/react-dom.js"></script>
+<script src="/vendor/htm.js"></script>
+<script src="/vendor/cytoscape.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

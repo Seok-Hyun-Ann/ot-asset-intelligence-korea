@@ -1,0 +1,29 @@
+{
+  "asset_id": "melsec-iqr-r08pcpu",
+  "asset_type": "PLC",
+  "components": [
+    {
+      "evidence_id": "ev-diagnostic-export-20260820",
+      "method": "project",
+      "observed_at": "2026-08-20T09:00:00Z",
+      "type": "controller_firmware",
+      "version": {
+        "raw": "48"
+      }
+    }
+  ],
+  "identity": {
+    "family_raw": "MELSEC iQ-R Series",
+    "model_raw": "MELSEC iQ-R Series R08PCPU",
+    "vendor_raw": "Mitsubishi Electric"
+  },
+  "location": {
+    "factory": "Factory-A",
+    "zone": "Cell-L2"
+  },
+  "operations": {
+    "safety_criticality": "high"
+  },
+  "synthetic": true,
+  "synthetic_note": "판정 커널 검증용으로 손으로 만든 픽스처입니다. 실제 현장 장비가 아닙니다."
+}

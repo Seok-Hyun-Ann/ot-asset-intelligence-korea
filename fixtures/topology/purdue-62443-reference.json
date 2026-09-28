@@ -1,0 +1,106 @@
+{
+  "provenance": {
+    "synthetic": true,
+    "basis": "Purdue Enterprise Reference Architecture Level 0~5 + ISA/IEC 62443-3-2 Zone/Conduit model",
+    "references": [
+      "NIST SP 800-82 Rev.3 Guide to Operational Technology Security (SPEC 부록 G R2)",
+      "ISA/IEC 62443 Series (SPEC 부록 G R14)"
+    ],
+    "authored_by": "project owner",
+    "warning": "표준의 계층 구조를 따른 합성 토폴로지입니다. 공개 데이터셋이 아니며 실제 공장의 관측 결과가 아닙니다. 경로 탐지 정확도의 근거로 사용할 수 없습니다 (ADR-013).",
+    "note": "엣지 status 는 observed/inferred/unknown 3종이며, 도달성은 observed 로만 확정됩니다 (ADR-014)."
+  },
+
+  "nodes": [
+    {"node_id": "internet",     "node_type": "external",    "purdue_level": 5.0, "zone": "External",   "label": "인터넷",                 "is_entry_point": true},
+    {"node_id": "vendor-remote","node_type": "external",    "purdue_level": 5.0, "zone": "External",   "label": "협력사 원격 유지보수",     "is_entry_point": true},
+
+    {"node_id": "vpn-gw",       "node_type": "network",     "purdue_level": 4.0, "zone": "Enterprise", "label": "VPN 집중장치"},
+    {"node_id": "it-workstation","node_type": "workstation","purdue_level": 4.0, "zone": "Enterprise", "label": "사무망 PC"},
+
+    {"node_id": "jump-host",    "node_type": "server",      "purdue_level": 3.5, "zone": "IDMZ",       "label": "점프 서버 (IDMZ)"},
+
+    {"node_id": "ews-l3-002",   "node_type": "workstation", "purdue_level": 3.0, "zone": "Site-Ops",   "label": "엔지니어링 워크스테이션"},
+    {"node_id": "historian",    "node_type": "server",      "purdue_level": 3.0, "zone": "Site-Ops",   "label": "Historian"},
+
+    {"node_id": "hmi-l2-003",   "node_type": "workstation", "purdue_level": 2.0, "zone": "Cell-L2",    "label": "HMI"},
+
+    {"node_id": "plc-fw48",     "node_type": "plc", "purdue_level": 1.0, "zone": "Cell-L2", "label": "MELSEC iQ-R (fw48)",   "asset_id": "melsec-iqr-fw48",       "safety_criticality": "high"},
+    {"node_id": "plc-r08pcpu",  "node_type": "plc", "purdue_level": 1.0, "zone": "Cell-L2", "label": "MELSEC iQ-R R08PCPU",  "asset_id": "melsec-iqr-r08pcpu",    "safety_criticality": "high"},
+    {"node_id": "plc-eol",      "node_type": "plc", "purdue_level": 1.0, "zone": "Cell-L5", "label": "MELSEC iQ-R (EOL)",    "asset_id": "melsec-iqr-eol-remote", "safety_criticality": "high"},
+    {"node_id": "plc-lowrisk",  "node_type": "plc", "purdue_level": 1.0, "zone": "Lab",     "label": "MELSEC iQ-R (실험실)", "asset_id": "melsec-iqr-lowrisk",    "safety_criticality": "low"},
+
+    {"node_id": "cell-press",   "node_type": "cell", "purdue_level": 0.0, "zone": "Cell-L2", "label": "프레스 셀 (물리)", "safety_criticality": "high"},
+    {"node_id": "cell-conveyor","node_type": "cell", "purdue_level": 0.0, "zone": "Cell-L5", "label": "컨베이어 셀 (물리)", "safety_criticality": "high"},
+    {"node_id": "cell-testrig", "node_type": "cell", "purdue_level": 0.0, "zone": "Lab",     "label": "시험 지그 (물리)",  "safety_criticality": "low"}
+  ],
+
+  "edges": [
+    {"src": "internet", "dst": "vpn-gw", "edge_type": "can_reach", "status": "observed",
+     "protocol": "ipsec", "port": 500, "grants": ["network"], "legitimate": true,
+     "controls": [], "evidence": {"method": "firewall_config", "observed_at": "2026-08-18T00:00:00Z", "confidence": 0.95}},
+
+    {"src": "vendor-remote", "dst": "vpn-gw", "edge_type": "can_reach", "status": "observed",
+     "protocol": "ipsec", "port": 500, "grants": ["network"], "legitimate": true,
+     "controls": [], "evidence": {"method": "firewall_config", "observed_at": "2026-08-18T00:00:00Z", "confidence": 0.9},
+     "_note": "MFA 미적용 — H02 의 무인증 원격 접점"},
+
+    {"src": "vpn-gw", "dst": "jump-host", "edge_type": "can_reach", "status": "observed",
+     "protocol": "rdp", "port": 3389, "requires": ["network"], "grants": ["network"], "legitimate": true,
+     "controls": ["acl"], "evidence": {"method": "firewall_config", "observed_at": "2026-08-18T00:00:00Z", "confidence": 0.95}},
+
+    {"src": "it-workstation", "dst": "jump-host", "edge_type": "can_reach", "status": "inferred",
+     "protocol": "rdp", "port": 3389, "requires": ["network"], "grants": ["network"], "legitimate": true,
+     "controls": ["acl"], "evidence": {"method": "diagram", "observed_at": "2026-06-01T00:00:00Z", "confidence": 0.5}},
+
+    {"src": "jump-host", "dst": "ews-l3-002", "edge_type": "can_reach", "status": "observed",
+     "protocol": "rdp", "port": 3389, "requires": ["network"], "grants": ["network", "credentials"], "legitimate": true,
+     "controls": [], "evidence": {"method": "pcap", "observed_at": "2026-08-20T09:00:00Z", "confidence": 0.9},
+     "_note": "공용 계정 사용 — 자격증명이 여기서 확보된다"},
+
+    {"src": "jump-host", "dst": "historian", "edge_type": "can_reach", "status": "observed",
+     "protocol": "https", "port": 443, "requires": ["network"], "grants": ["network"], "legitimate": true,
+     "controls": ["acl"], "evidence": {"method": "pcap", "observed_at": "2026-08-20T09:00:00Z", "confidence": 0.9}},
+
+    {"src": "ews-l3-002", "dst": "hmi-l2-003", "edge_type": "can_reach", "status": "observed",
+     "protocol": "smb", "port": 445, "requires": ["network"], "grants": ["network"], "legitimate": true,
+     "controls": [], "evidence": {"method": "pcap", "observed_at": "2026-08-20T09:00:00Z", "confidence": 0.9}},
+
+    {"src": "ews-l3-002", "dst": "plc-fw48", "edge_type": "administers", "status": "observed",
+     "protocol": "modbus_tcp", "port": 502, "requires": ["network", "credentials"],
+     "grants": ["code_exec", "control_write"], "legitimate": true, "controls": [],
+     "evidence": {"method": "pcap", "observed_at": "2026-08-20T09:00:00Z", "confidence": 0.92},
+     "_note": "프로젝트 다운로드 경로 — 로직 변경 가능"},
+
+    {"src": "ews-l3-002", "dst": "plc-eol", "edge_type": "administers", "status": "inferred",
+     "protocol": "modbus_tcp", "port": 502, "requires": ["network", "credentials"],
+     "grants": ["code_exec", "control_write"], "legitimate": true, "controls": [],
+     "evidence": {"method": "interview", "observed_at": "2026-05-10T00:00:00Z", "confidence": 0.45}},
+
+    {"src": "hmi-l2-003", "dst": "plc-fw48", "edge_type": "can_reach", "status": "observed",
+     "protocol": "modbus_tcp", "port": 502, "requires": ["network"],
+     "grants": ["control_write"], "legitimate": true, "controls": [],
+     "evidence": {"method": "pcap", "observed_at": "2026-08-20T09:00:00Z", "confidence": 0.95},
+     "_note": "평문 Modbus — 인증 없이 쓰기 기능코드 도달"},
+
+    {"src": "hmi-l2-003", "dst": "plc-r08pcpu", "edge_type": "can_reach", "status": "observed",
+     "protocol": "modbus_tcp", "port": 502, "requires": ["network"],
+     "grants": ["control_write"], "legitimate": true, "controls": [],
+     "evidence": {"method": "pcap", "observed_at": "2026-08-20T09:00:00Z", "confidence": 0.95}},
+
+    {"src": "vpn-gw", "dst": "plc-eol", "edge_type": "can_reach", "status": "unknown",
+     "protocol": "modbus_tcp", "port": 502, "requires": ["network"], "grants": ["control_write"],
+     "legitimate": false, "controls": [],
+     "evidence": {"method": "none", "confidence": 0.0},
+     "_note": "우회 연결 의심 — 확인되지 않음"},
+
+    {"src": "historian", "dst": "hmi-l2-003", "edge_type": "depends_on", "status": "observed",
+     "protocol": "opcua", "port": 4840, "requires": ["network"], "grants": [], "legitimate": true,
+     "controls": [], "evidence": {"method": "pcap", "observed_at": "2026-08-20T09:00:00Z", "confidence": 0.85}},
+
+    {"src": "plc-fw48",    "dst": "cell-press",    "edge_type": "controls", "status": "observed", "requires": ["control_write"], "legitimate": true, "evidence": {"method": "io_list", "observed_at": "2026-07-01T00:00:00Z", "confidence": 0.98}},
+    {"src": "plc-r08pcpu", "dst": "cell-press",    "edge_type": "controls", "status": "observed", "requires": ["control_write"], "legitimate": true, "evidence": {"method": "io_list", "observed_at": "2026-07-01T00:00:00Z", "confidence": 0.98}},
+    {"src": "plc-eol",     "dst": "cell-conveyor", "edge_type": "controls", "status": "observed", "requires": ["control_write"], "legitimate": true, "evidence": {"method": "io_list", "observed_at": "2026-07-01T00:00:00Z", "confidence": 0.98}},
+    {"src": "plc-lowrisk", "dst": "cell-testrig",  "edge_type": "controls", "status": "observed", "requires": ["control_write"], "legitimate": true, "evidence": {"method": "io_list", "observed_at": "2026-07-01T00:00:00Z", "confidence": 0.98}}
+  ]
+}

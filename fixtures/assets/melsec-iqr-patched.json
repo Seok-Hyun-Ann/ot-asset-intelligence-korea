@@ -1,0 +1,36 @@
+{
+  "asset_id": "melsec-iqr-patched",
+  "asset_type": "PLC",
+  "components": [
+    {
+      "evidence_id": "ev-diagnostic-export-20260820",
+      "method": "project",
+      "observed_at": "2026-08-25T02:00:00Z",
+      "type": "controller_firmware",
+      "version": {
+        "raw": "49"
+      }
+    }
+  ],
+  "identity": {
+    "family_raw": "MELSEC iQ-R Series",
+    "model_raw": "MELSEC iQ-R Series R08/16/32/120PCPU firmware",
+    "vendor_raw": "Mitsubishi Electric"
+  },
+  "location": {
+    "factory": "Factory-A",
+    "zone": "Cell-L2"
+  },
+  "operations": {
+    "safety_criticality": "high"
+  },
+  "remediation_evidence": [
+    {
+      "advisory_id": "ICSA-26-036-02",
+      "evidence_id": "ev-patch-record-20260825",
+      "observed_at": "2026-08-25T02:00:00Z"
+    }
+  ],
+  "synthetic": true,
+  "synthetic_note": "판정 커널 검증용으로 손으로 만든 픽스처입니다. 실제 현장 장비가 아닙니다."
+}

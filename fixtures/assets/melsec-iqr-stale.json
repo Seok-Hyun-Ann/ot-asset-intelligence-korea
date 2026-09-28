@@ -1,0 +1,29 @@
+{
+  "asset_id": "melsec-iqr-stale",
+  "asset_type": "PLC",
+  "components": [
+    {
+      "evidence_id": "ev-diagnostic-export-20260820",
+      "method": "project",
+      "observed_at": "2023-01-05T09:00:00Z",
+      "type": "controller_firmware",
+      "version": {
+        "raw": "48"
+      }
+    }
+  ],
+  "identity": {
+    "family_raw": "MELSEC iQ-R Series",
+    "model_raw": "MELSEC iQ-R Series R08/16/32/120PCPU firmware",
+    "vendor_raw": "Mitsubishi Electric"
+  },
+  "location": {
+    "factory": "Factory-C",
+    "zone": "Cell-L4"
+  },
+  "operations": {
+    "safety_criticality": "low"
+  },
+  "synthetic": true,
+  "synthetic_note": "판정 커널 검증용으로 손으로 만든 픽스처입니다. 실제 현장 장비가 아닙니다."
+}

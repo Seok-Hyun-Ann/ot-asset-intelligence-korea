@@ -1,0 +1,6 @@
+자산id,제조사,모델,펌웨어,공장,구역,안전중요도,수명주기,비고
+plc-line1-01,Mitsubishi Electric,MELSEC iQ-R Series R08PCPU,48,Factory-A,Cell-L2,high,supported,정상
+plc-line1-02,Mitsubishi Electric,MELSEC iQ-R Series R08PCPU,,Factory-A,Cell-L2,high,supported,펌웨어미상
+plc-line1-01,Mitsubishi Electric,MELSEC iQ-R Series R08PCPU,49,Factory-A,Cell-L2,high,supported,중복행
+,Mitsubishi Electric,MELSEC iQ-R,48,Factory-A,Cell-L3,high,supported,id없음
+plc-evil-01,=cmd|' /C calc'!A1,MELSEC iQ-R Series R08PCPU,48,Factory-B,Cell-L1,high,EOL,수식주입

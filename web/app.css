@@ -1,0 +1,139 @@
+/* 디아조 청사진 — 도면 종이, 프러시안 블루 선, 검사 도장의 붉은색 하나.
+   판정 문구만 바탕체. 채도는 판정에만 쓴다. */
+:root{
+  --paper:#EFEDE7; --card:#FBFAF7; --sink:#E6E3DB;
+  --line:#17365D; --line2:#40618C;
+  --ink:#1A1C1E; --faded:#77808A; --rule:#C6C2B8; --hair:#DEDAD1;
+  --stamp:#A31C1F; --pending:#8A6800; --settled:#2C5C43;
+  --serif:Batang,'Times New Roman',serif;
+  --sans:'Malgun Gothic','Segoe UI',sans-serif;
+  --mono:Consolas,'Courier New',monospace;
+}
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:13px;line-height:1.6}
+:focus-visible{outline:2px solid var(--line);outline-offset:2px}
+a{color:var(--line)}
+
+/* 표제란 */
+.tb{border-top:5px solid var(--line);background:var(--card);border-bottom:1px solid var(--rule);
+  position:sticky;top:0;z-index:20}
+.tb-in{max-width:1620px;margin:0 auto;padding:11px 24px;display:flex;align-items:baseline;
+  gap:15px;flex-wrap:wrap}
+.tb b{font-family:var(--serif);font-size:19px;color:var(--line);letter-spacing:-.01em}
+.tb .sub{font-size:10.5px;color:var(--faded)}
+.tb .r{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--faded);
+  text-align:right;line-height:1.5}
+.warnbar{background:#FBF3E4;border-bottom:1px solid var(--rule);font-size:11.5px;
+  color:#6b5510;padding:5px 24px;text-align:center}
+
+/* 색인 */
+.nav{background:var(--card);border-bottom:1px solid var(--rule);position:sticky;top:52px;z-index:19}
+.nav-in{max-width:1620px;margin:0 auto;padding:0 24px;display:flex;gap:0;overflow-x:auto}
+.tab{border:0;background:0;padding:9px 15px;font-family:var(--sans);font-size:12.5px;
+  color:var(--faded);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+  white-space:nowrap}
+.tab:hover{color:var(--line)}
+.tab.on{color:var(--line);font-weight:700;border-bottom-color:var(--line);background:0}
+
+.sheet{max-width:1620px;margin:0 auto;padding:24px}
+.split{display:grid;grid-template-columns:330px 1fr;gap:26px;align-items:start}
+.split3{display:grid;grid-template-columns:250px 1fr;gap:26px;align-items:start}
+
+h2{font-family:var(--serif);font-size:25px;font-weight:700;color:var(--line);
+  line-height:1.25;margin:0 0 3px;letter-spacing:-.015em}
+.lead{font-size:12.5px;color:var(--faded);margin:0 0 20px}
+h3{font-size:9.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--faded);margin:26px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--rule)}
+h3:first-child{margin-top:0}
+
+.card{background:var(--card);border:1px solid var(--rule);padding:15px 17px}
+.card+.card{margin-top:12px}
+
+label{display:block;font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--faded);font-weight:700;margin:0 0 4px}
+.f+.f{margin-top:12px}
+input[type=text],input[type=search],select,textarea{width:100%;padding:7px 9px;
+  border:1px solid var(--rule);background:#fff;font-family:var(--mono);font-size:12.5px;
+  color:var(--ink)}
+textarea{font-size:12px;line-height:1.5;min-height:170px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--line)}
+button{border:1px solid var(--line);background:var(--line);color:#fff;padding:8px 17px;
+  font-family:var(--sans);font-size:12.5px;cursor:pointer}
+button:hover{background:var(--line2);border-color:var(--line2)}
+button.ghost{background:0;color:var(--faded);border-color:var(--rule)}
+button.ghost:hover{color:var(--line);border-color:var(--line);background:0}
+/* .tab 도 button 이라 `button.on` 이 활성 탭까지 칠해버렸다.
+   필터 버튼에만 걸리도록 범위를 좁힌다 (클래스 충돌 방지). */
+.btnrow button.on{background:var(--line);color:#fff;border-color:var(--line)}
+button:disabled{opacity:.45;cursor:default}
+.btnrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+
+table{border-collapse:collapse;width:100%;font-size:12.5px;background:var(--card)}
+th,td{border:1px solid var(--hair);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:var(--sink);font-weight:700;font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--faded)}
+tr.click{cursor:pointer}
+tr.click:hover td{background:#fff}
+tr.on td{background:#fff;box-shadow:inset 3px 0 0 var(--line)}
+.m{font-family:var(--mono);font-size:11.5px}
+.k{color:var(--faded);font-size:11.5px}
+.right{text-align:right}
+
+.callout{border-left:3px solid var(--pending);background:var(--card);padding:11px 14px;
+  margin:12px 0;font-size:12.5px}
+.callout.ok{border-left-color:var(--settled)}
+.callout.hot{border-left-color:var(--stamp)}
+.callout .big{font-family:var(--serif);font-size:20px;font-weight:700;display:block;
+  margin-bottom:4px}
+
+/* 상태 */
+.v{font-family:var(--serif);font-size:17px;font-weight:700;line-height:1.3}
+.t0{color:var(--stamp)} .t1{color:var(--pending)} .t2{color:var(--settled)}
+.bk{font-family:var(--mono);font-size:16px;font-weight:700}
+.pill{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:1px 7px;
+  border:1px solid var(--rule);background:var(--card);color:var(--faded)}
+.pill.lv{border-color:var(--line2);color:var(--line)}
+
+/* 확신 띠 */
+.band{display:flex;border:1px solid var(--line);overflow:hidden;margin-bottom:2px}
+.seg{border:0;padding:9px 13px;display:block;text-align:left;color:#fff;cursor:pointer;
+  flex-basis:0;min-width:92px;overflow:hidden;font-family:var(--sans)}
+.seg .n{display:block;font-family:var(--mono);font-size:19px;font-weight:700;line-height:1.1}
+.seg .l{display:block;font-size:10.5px;margin-top:2px;opacity:.93;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.sv0{background:var(--stamp)} .sv1{background:var(--pending)} .sv2{background:var(--settled)}
+
+/* 판정 행 */
+.rec{display:grid;grid-template-columns:76px 1fr 280px 50px;gap:17px;padding:13px 4px 14px;
+  border-bottom:1px solid var(--hair);cursor:pointer;align-items:start}
+.rec:hover{background:var(--card)}
+.rec.on{background:var(--card);box-shadow:inset 3px 0 0 var(--line)}
+.rec .mark{font-family:var(--mono);font-size:20px;font-weight:700;line-height:1}
+.rec .mark small{display:block;font-family:var(--sans);font-size:9.5px;font-weight:400;
+  color:var(--faded);margin-top:4px;white-space:nowrap}
+.rec .tag{font-family:var(--mono);font-size:11.5px;color:var(--faded)}
+.rec .say{font-size:12px;color:#454b52;margin-top:2px}
+.rec .why{font-size:11.5px}
+.rec .why .hi{font-family:var(--mono);font-weight:700;color:var(--line)}
+.rec .why .s2{color:var(--faded);font-size:11px;margin-top:3px}
+.rec .wt{font-family:var(--mono);font-size:12px;color:var(--faded);text-align:right}
+
+/* 그래프 */
+.cy{height:520px;border:1px solid var(--rule);background:var(--card)}
+.cy.tall{height:620px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--faded);margin-top:7px}
+.legend i{display:inline-block;width:22px;height:0;border-top:2px solid var(--line);
+  margin-right:5px;vertical-align:middle}
+.legend i.d{border-top-style:dashed}
+.legend i.g{border-top-color:var(--faded);border-top-style:dotted}
+
+.empty{padding:34px 4px;color:var(--faded)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.spin{color:var(--faded);padding:22px 4px}
+.err{border-left:3px solid var(--stamp);background:#FBF0F0;padding:10px 13px;margin:10px 0;
+  font-size:12.5px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:1150px){.split,.split3{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}
+  .rec{grid-template-columns:64px 1fr}.rec .why,.rec .wt{grid-column:2}.rec .wt{text-align:left}}

@@ -1,0 +1,30 @@
+[project]
+name = "otai"
+version = "0.1.0"
+description = "OT Asset Intelligence - 적용성 판정 커널 (슬라이스 1)"
+requires-python = ">=3.11"
+# 첫 런타임 의존성 (ADR-018). Ed25519 번들 서명에만 쓰인다.
+# 컴파일된 확장을 포함하므로 폐쇄망 반입 시 플랫폼에 맞는 wheel 이 함께 필요하다.
+dependencies = ["cryptography>=42"]
+
+[project.optional-dependencies]
+# 웹앱 (표 27). `python -m otai web` 에 필요하다. CLI 판정 커널만 쓰면 없어도 된다.
+# psycopg[binary] 는 컴파일된 확장이라 폐쇄망 반입 시 플랫폼 wheel 이 함께 필요하다.
+web = ["fastapi>=0.110", "uvicorn>=0.29", "psycopg[binary]>=3.1"]
+# 개발·검증. `scripts/check_web.py` 는 playwright 와 브라우저(`playwright install chromium`)가 필요하다.
+dev = ["pytest>=8.0", "hypothesis>=6.100", "playwright>=1.44",
+       "fastapi>=0.110", "uvicorn>=0.29", "psycopg[binary]>=3.1"]
+
+[project.scripts]
+otai = "otai.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# 전수 검사(-m slow)는 수 분 걸린다. 기본 실행에서는 빼고, 규모를 바꾼 뒤에 돌린다.
+addopts = "-q -m 'not slow'"
+markers = [
+    "slow: 전 corpus 전수 검사. `python -m pytest -m slow` 로 따로 돌린다",
+]
+
+[tool.setuptools.packages.find]
+include = ["otai*"]

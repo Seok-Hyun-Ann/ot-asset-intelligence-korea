@@ -1,0 +1,51 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.hypothesis/
+*.egg-info/
+*.db
+
+# ADR-005 / R12: Siemens TLP:WHITE 는 공유 표시이지 재배포 허가가 아니다.
+# scripts/fetch_advisories.py 로 각자 받는다. CISA(공공 도메인)는 커밋한다.
+data/csaf/siemens/
+
+# ATT&CK ICS STIX 번들 (4MB). 재배포는 허용되나 크기 때문에 커밋하지 않는다.
+# scripts/fetch_advisories.py 로 받는다.
+data/attack/
+out/
+
+# 번들 서명 비밀키는 절대 커밋하지 않는다 (ADR-018)
+*.key
+signing.key
+
+# 로컬 툴체인 (포터블 node + PostgreSQL 바이너리·데이터 디렉터리). 수백 MB 다.
+.toolchain/
+
+# 프런트엔드 빌드 산출물. `cd frontend && npm run build` 로 만든다.
+# 없어도 웹앱은 뜬다 — web/vendor 의 UMD 판으로 폴백한다 (폐쇄망 안전망).
+frontend/node_modules/
+web/dist/
+.toolchain/csaf-repo/
+
+# ADR-030 대량 수집분. 공공 도메인이지만 40MB·1,300건이라 커밋하지 않는다.
+# `python scripts/fetch_advisories.py --bulk` 로 재현한다.
+# 골드셋 앵커 2건은 고정 스냅샷이라 예외로 남긴다 — 판정 재현의 기준이다.
+data/csaf/cisa/**/*.json
+!data/csaf/cisa/2026/icsa-26-036-02.json
+!data/csaf/cisa/2026/icsa-26-071-04.json
+
+# 합성 자산. `python scripts/make_assets.py --apply` 로 재현한다 (결정적).
+fixtures/assets-scale/
+
+# 공개 범위 (2026-09-27). 로컬에는 두되 올리지 않는다.
+# - 원본 기획서: docs/SPEC_v1.0.md 가 정본이고, 원본은 로컬 보관
+# - KEV 2026.09.08: 코드는 최신 스냅샷만 쓴다. 과거 판정 재현용으로 로컬 보관
+*.docx
+data/kev/2026.09.08/
+
+# 검증 도구는 배포에 포함하지 않는다 (2026-09-29). 실행에 필요한 것만 올린다.
+tests/
+scripts/check_web.py
+scripts/check_ui.py
+scripts/check_ask.py
+scripts/verify_matrix.py

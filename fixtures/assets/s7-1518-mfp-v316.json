@@ -1,0 +1,30 @@
+{
+  "asset_id": "s7-1518-mfp-v316",
+  "asset_type": "PLC",
+  "components": [
+    {
+      "evidence_id": "ev-diagnostic-export-20260820",
+      "method": "project",
+      "observed_at": "2026-08-20T09:00:00Z",
+      "type": "controller_firmware",
+      "version": {
+        "raw": "V3.1.6"
+      }
+    }
+  ],
+  "identity": {
+    "family_raw": "SIMATIC S7-1500",
+    "model_raw": "CPU 1518-4 PN/DP MFP",
+    "order_number": "6ES7518-4AX00-1AB0",
+    "vendor_raw": "Siemens"
+  },
+  "location": {
+    "factory": "Factory-A",
+    "zone": "Cell-L3"
+  },
+  "operations": {
+    "safety_criticality": "high"
+  },
+  "synthetic": true,
+  "synthetic_note": "판정 커널 검증용으로 손으로 만든 픽스처입니다. 실제 현장 장비가 아닙니다."
+}
