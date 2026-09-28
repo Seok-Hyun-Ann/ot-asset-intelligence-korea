@@ -1,6 +1,8 @@
 <div align="center">
 
-# OT 자산 취약점·공격 경로 관리 플랫폼
+# OT Asset Intelligence
+
+### OT 자산 취약점·공격 경로 관리 플랫폼
 
 **모르는 것은 모른다고 답하는** 스마트 팩토리 OT 보안 의사결정 도구
 *Evidence-graded vulnerability applicability and attack-path management for OT assets — on-premises, air-gapped first.*
@@ -54,7 +56,7 @@
 ## 5분 안에 시작하기
 
 ```bash
-git clone <this-repo> && cd <this-repo>
+git clone https://github.com/Seok-Hyun-Ann/ot-asset-intelligence-korea.git && cd ot-asset-intelligence-korea
 python -m pip install -e ".[web]"          # Python 3.11+ · 웹앱 의존성까지
 python scripts/fetch_advisories.py         # 권고문·KEV·ATT&CK 수집 (인터넷 필요, 1회)
 python -m otai web --db data/otai.db --seed fixtures/assets
