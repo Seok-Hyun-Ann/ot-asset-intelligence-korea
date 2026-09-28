@@ -177,7 +177,7 @@ python -m otai paths --topology fixtures/topology/purdue-62443-reference.json \
 
 # 다중 소스 비교 — 필드별 권위, 충돌 보존
 python -m otai sources --advisory data/csaf/cisa/2026/icsa-26-036-02.json data/csaf/cisa/2026/icsa-26-071-04.json
-#   (fetch_advisories.py 를 돌렸다면 Siemens 원문과도 비교할 수 있습니다: data/csaf/siemens/ssa-452276.json)
+#   (fetch_advisories.py 를 돌렸다면 Siemens 원문과도 비교할 수 있습니다: data/csaf/siemens/ssa-019113.json)
 
 # 폐쇄망 번들 — Ed25519 서명 · 파일별 해시 · 매니페스트에 없는 멤버 거부
 python -m otai keygen --out keys/
