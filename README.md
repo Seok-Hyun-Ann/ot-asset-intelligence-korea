@@ -60,7 +60,7 @@ git clone https://github.com/Seok-Hyun-Ann/ot-asset-intelligence-korea.git && cd
 python -m pip install -e ".[web]"          # Python 3.11+ · 웹앱 의존성까지
 python scripts/fetch_advisories.py         # 권고문·KEV·ATT&CK 수집 (인터넷 필요, 1회)
 python -m otai web --db data/otai.db --seed fixtures/assets
-#   → http://127.0.0.1:8000/ui/
+#   → http://127.0.0.1:8000/   (frontend/ 를 빌드하면 /ui/ 의 정식 화면, 아니면 같은 자리의 폴백 화면)
 ```
 
 이 경로는 **SQLite** 라 추가 설치가 없습니다. 운영 기본값인 PostgreSQL 은 [아래](#웹앱)에 있습니다.
@@ -176,7 +176,8 @@ python -m otai paths --topology fixtures/topology/purdue-62443-reference.json \
   --target melsec-iqr-fw48 --as-of 2026-09-11
 
 # 다중 소스 비교 — 필드별 권위, 충돌 보존
-python -m otai sources --advisory data/csaf/cisa/2026/icsa-26-071-04.json data/csaf/siemens/ssa-452276.json
+python -m otai sources --advisory data/csaf/cisa/2026/icsa-26-036-02.json data/csaf/cisa/2026/icsa-26-071-04.json
+#   (fetch_advisories.py 를 돌렸다면 Siemens 원문과도 비교할 수 있습니다: data/csaf/siemens/ssa-452276.json)
 
 # 폐쇄망 번들 — Ed25519 서명 · 파일별 해시 · 매니페스트에 없는 멤버 거부
 python -m otai keygen --out keys/

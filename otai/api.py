@@ -1111,6 +1111,14 @@ def build_app(*, db: str, advisory_paths: List[Path], as_of: str,
     # 외부 자원은 여전히 0개다: 번들은 전부 로컬에서 만들어 함께 배포한다.
     if DIST.exists():
         app.mount("/ui", StaticFiles(directory=str(DIST), html=True), name="ui")
+    else:
+        # 빌드가 없으면 /ui 는 404 였다 — README 를 보고 온 사람이 첫 화면에서 막힌다.
+        # 폴백(UMD) 화면이 있는 / 로 보낸다. 해시 경로는 그대로 살아남는다.
+        @app.get("/ui")
+        @app.get("/ui/")
+        @app.get("/ui/{path:path}")
+        def ui_fallback(path: str = ""):
+            return RedirectResponse("/")
 
     # UMD 판(빌드 없이 도는 폴백)은 /legacy 로 남긴다.
     if (WEB / "vendor").exists():

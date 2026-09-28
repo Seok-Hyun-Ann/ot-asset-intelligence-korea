@@ -461,6 +461,12 @@ def _load_assets(patterns):
 
 
 def _cmd_sources(args) -> int:
+    missing = [str(p) for p in args.advisory if not Path(p).exists()]
+    if missing:
+        raise SystemExit(
+            "권고문 파일이 없습니다: %s\n  저장소에는 골드셋 2건만 들어 있습니다. "
+            "나머지는  python scripts/fetch_advisories.py  로 받습니다."
+            % ", ".join(missing))
     advs = [load_advisory(p) for p in args.advisory]
     links = link_advisories(advs)
     L = []
