@@ -49,3 +49,11 @@ scripts/check_web.py
 scripts/check_ui.py
 scripts/check_ask.py
 scripts/verify_matrix.py
+
+# 표준 원문은 재배포 허가가 없다 (ADR-043).
+# - KISA 「주요정보통신기반시설 기술적 취약점 분석·평가 방법 상세가이드」 2026년판
+# - NIST SP 800-82r2 한글 번역본 — 번역본 저작권이 KISA 에 있고 무단 복제·배포 금지
+# 항목 코드·중요도·분류명은 표준에 대한 **사실**이라 매핑 표에 적지만,
+# 점검 내용·판단 기준 본문은 저작물이므로 담지 않는다.
+data/standards/
+*.pdf

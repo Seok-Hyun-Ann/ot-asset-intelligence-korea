@@ -1,0 +1,499 @@
+{
+ "standard": {
+  "id": "KISA-ICS-2026",
+  "title": "주요정보통신기반시설 기술적 취약점 분석·평가 방법 상세가이드",
+  "chapter": "06. 제어시스템",
+  "edition": "2026",
+  "publisher": "한국인터넷진흥원(KISA)",
+  "items": 51,
+  "source_note": "항목 코드·중요도·분류명은 표준에 대한 사실이라 싣는다. 점검 내용·판단 기준 본문은 KISA 의 저작물이므로 싣지 않는다 — `gist` 는 우리가 쓴 한 줄 요약이다. 원문은 보호나라에서 받는다."
+ },
+ "disclaimer": "이 표는 **근거 제공** 범위를 적은 것이지 준수 여부 판정이 아니다. 취약점 분석·평가는 정보통신기반 보호법에 따라 자격을 갖춘 평가기관이 수행한다. 이 제품은 그 평가에 쓸 기계 판독 가능한 근거를 낼 뿐이다.",
+ "controls": [
+  {
+   "code": "C-01",
+   "severity": "상",
+   "category": "계정 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-02",
+   "severity": "상",
+   "category": "계정 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-03",
+   "severity": "상",
+   "category": "계정 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-04",
+   "severity": "중",
+   "category": "계정 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-05",
+   "severity": "중",
+   "category": "계정 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-06",
+   "severity": "중",
+   "category": "계정 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-07",
+   "severity": "상",
+   "category": "서비스 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-08",
+   "severity": "상",
+   "category": "서비스 관리",
+   "our_scope": "partial",
+   "gist": "불필요·취약한 서비스 제거 또는 보완대책",
+   "evidence_kind": [
+    "exposure_finding"
+   ],
+   "note": "평문 제어 프로토콜이 서버로 열려 있는지를 표 4 의 노출 위험으로 낸다. '불필요한가' 는 공정 요구를 알아야 답할 수 있어 우리가 정하지 않는다."
+  },
+  {
+   "code": "C-09",
+   "severity": "중",
+   "category": "서비스 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-10",
+   "severity": "중",
+   "category": "서비스 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-11",
+   "severity": "중",
+   "category": "서비스 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-12",
+   "severity": "중",
+   "category": "서비스 관리",
+   "our_scope": "partial",
+   "gist": "제어 명령 등 중요 정보의 위변조·replay 방지 대책",
+   "evidence_kind": [
+    "exposure_finding"
+   ],
+   "note": "암호화 없이 제어 명령이 오가는지(`encrypted=false`)까지 답한다. `encrypted` 가 미상이면 발견이 아니라 질문으로 올린다(ADR-035). replay 방지 기법의 적용 여부는 장비 설정이라 답하지 못한다."
+  },
+  {
+   "code": "C-13",
+   "severity": "하",
+   "category": "서비스 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-14",
+   "severity": "하",
+   "category": "서비스 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-15",
+   "severity": "하",
+   "category": "서비스 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-16",
+   "severity": "상",
+   "category": "패치 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-17",
+   "severity": "상",
+   "category": "패치 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-18",
+   "severity": "상",
+   "category": "패치 관리",
+   "our_scope": "direct",
+   "gist": "알려진 취약점에 보안패치 또는 상응하는 대응책 적용",
+   "evidence_kind": [
+    "applicability_decision",
+    "exposure_finding",
+    "blocking_candidates"
+   ],
+   "note": "이 제품의 중심 기능이다. 자산×권고문 적용성 9상태와 근거, 그리고 패치가 불가할 때의 보상 통제(차단 후보)를 함께 낸다. 다만 '적용했는가' 는 현장 조치 기록이라 우리가 답하지 못한다 — 우리는 '무엇에 해당하는가' 까지다."
+  },
+  {
+   "code": "C-19",
+   "severity": "중",
+   "category": "패치 관리",
+   "our_scope": "partial",
+   "gist": "안정성 확인된 최신 버전 사용 · 기술지원 종료 제품 미사용",
+   "evidence_kind": [
+    "lifecycle",
+    "hard_rule_H04"
+   ],
+   "note": "**두 가지가 한 코드에 묶여 있다.** 뒤쪽(EOL/EOS)은 제조사 선언까지 확인해 답한다(`lifecycle.vendor_confirmed`, H04). 앞쪽('최신 버전')은 '최신이 무엇인가' 를 아는 출처가 없어 답하지 않는다 — 추정하면 ADR-038 의 설정값 함정과 같은 오류가 된다."
+  },
+  {
+   "code": "C-20",
+   "severity": "하",
+   "category": "패치 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-21",
+   "severity": "상",
+   "category": "네트워크 접근통제",
+   "our_scope": "partial",
+   "gist": "제어 네트워크를 외부망과 물리적으로 분리",
+   "evidence_kind": [
+    "reachability",
+    "attack_paths"
+   ],
+   "note": "**반증 쪽으로만 답한다.** 외부에서 이 장비까지 관측된 경로가 있으면 분리되지 않았다는 근거가 된다. 경로를 못 찾은 것은 '분리됐다' 가 아니다 — 캡처는 시간 창이고 토폴로지는 미완일 수 있다(ADR-014/039)."
+  },
+  {
+   "code": "C-22",
+   "severity": "상",
+   "category": "네트워크 접근통제",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-23",
+   "severity": "상",
+   "category": "네트워크 접근통제",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-24",
+   "severity": "상",
+   "category": "네트워크 접근통제",
+   "our_scope": "partial",
+   "gist": "비인가 시스템/기기의 연결·접속 차단",
+   "evidence_kind": [
+    "capture_endpoints"
+   ],
+   "note": "캡처에서 실제로 통신한 끝점 목록을 낸다. '인가되었는가' 는 자산 목록과 대조해야 하고, 캡처에 안 보인 기기가 없다는 뜻은 아니다."
+  },
+  {
+   "code": "C-25",
+   "severity": "상",
+   "category": "네트워크 접근통제",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-26",
+   "severity": "하",
+   "category": "네트워크 접근통제",
+   "our_scope": "partial",
+   "gist": "제어 네트워크 세분화 및 필요한 통신만 허용",
+   "evidence_kind": [
+    "topology",
+    "blocking_candidates"
+   ],
+   "note": "관측된 통신 쌍과, 끊었을 때 공격 경로가 사라지는 차단 후보를 낸다. 정상 업무 통신에 미치는 영향도 함께 센다(설계 원칙 P6)."
+  },
+  {
+   "code": "C-27",
+   "severity": "상",
+   "category": "물리적 접근통제",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-28",
+   "severity": "중",
+   "category": "물리적 접근통제",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-29",
+   "severity": "상",
+   "category": "보안위협 탐지",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-30",
+   "severity": "하",
+   "category": "보안위협 탐지",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-31",
+   "severity": "상",
+   "category": "복구 대응",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-32",
+   "severity": "상",
+   "category": "복구 대응",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-33",
+   "severity": "상",
+   "category": "복구 대응",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-34",
+   "severity": "중",
+   "category": "복구 대응",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-35",
+   "severity": "중",
+   "category": "복구 대응",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-36",
+   "severity": "중",
+   "category": "복구 대응",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-37",
+   "severity": "하",
+   "category": "복구 대응",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-38",
+   "severity": "하",
+   "category": "복구 대응",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-39",
+   "severity": "하",
+   "category": "복구 대응",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-40",
+   "severity": "하",
+   "category": "복구 대응",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-41",
+   "severity": "하",
+   "category": "복구 대응",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-42",
+   "severity": "하",
+   "category": "복구 대응",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-43",
+   "severity": "상",
+   "category": "보안 관리",
+   "our_scope": "partial",
+   "gist": "구성요소 자산정보(담당자·제조사·모델명·펌웨어·설치 SW) 최신 유지",
+   "evidence_kind": [
+    "asset_inventory",
+    "identity_completeness",
+    "network_addresses"
+   ],
+   "note": "제조사·모델명·펌웨어는 식별 사다리와 완성도 L0~L5 로 답한다. 주소(IP·MAC·VLAN)는 ADR-042 로 들어왔다. **담당자**(소유 부서)와 **설치 SW** 는 아직 담지 못한다 — 설치 SW 는 SBOM 입력이 필요하다(GAP_ANALYSIS 항목 b)."
+  },
+  {
+   "code": "C-44",
+   "severity": "상",
+   "category": "보안 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-45",
+   "severity": "상",
+   "category": "보안 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-46",
+   "severity": "상",
+   "category": "보안 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-47",
+   "severity": "중",
+   "category": "보안 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-48",
+   "severity": "중",
+   "category": "보안 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-49",
+   "severity": "하",
+   "category": "보안 관리",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  },
+  {
+   "code": "C-50",
+   "severity": "상",
+   "category": "보안 관리",
+   "our_scope": "direct",
+   "gist": "허가에 의한 로직 변경 정책 수립",
+   "evidence_kind": [
+    "hard_rule_H02",
+    "exposure_finding"
+   ],
+   "note": "무인증 원격 쓰기·로직 변경이 중요 자산에 도달하는지를 H02 로 낸다. 정책 '수립' 자체는 문서 작업이라 답하지 못하지만, 정책이 지켜지지 않는 기술적 상태는 근거로 낸다."
+  },
+  {
+   "code": "C-51",
+   "severity": "하",
+   "category": "교육 훈련",
+   "our_scope": "none",
+   "gist": null,
+   "evidence_kind": [],
+   "note": null
+  }
+ ]
+}
