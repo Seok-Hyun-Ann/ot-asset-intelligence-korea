@@ -254,8 +254,12 @@ python scripts/inventory.py --db data/otai.db                # 지금 무엇을 
 (Vulnerability Monitoring **and Scanning**)에서 모니터링 쪽은 답하고 **스캐닝은 하지
 않습니다.** 능동 질의는 현장 안전 때문에 금지입니다.
 
-표준 **원문은 저장소에 없습니다.** 매핑 표에는 항목 코드·중요도·분류명과 우리가 쓴
-한 줄 요약만 담습니다. 자세히는 [ADR-043 · ADR-044](docs/DECISIONS.md).
+표준 **원문은 저장소에 없습니다.** 매핑 표에는 항목 코드·분류명과 매핑 사유를 담고,
+KISA 는 우리가 쓴 한 줄 요약(본문은 재배포 금지), NIST 는 근거가 된 **짧은 원문 인용**을
+함께 싣습니다(미국 정부 저작물). 자세히는 [ADR-043 · ADR-044](docs/DECISIONS.md).
+
+> **화면·CLI 연결은 아직 없습니다.** 지금은 엔진 모듈(`otai/controls.py`)과 매핑 표뿐이고,
+> 보고서로 뽑는 길이 없습니다 — [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md) 의 남은 할 일입니다.
 
 ## 무엇을 주장하고 무엇을 주장하지 않는가
 
