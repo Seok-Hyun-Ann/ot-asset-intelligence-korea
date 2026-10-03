@@ -72,11 +72,65 @@ class Protocol:
 
 
 @dataclass(frozen=True)
+class NetworkAddress:
+    """자산이 쓰는 주소 하나. **값이 아니라 관측이다** (ADR-042).
+
+    CISA 자산 인벤토리 지침의 고우선 속성 중 Hostname·IP·MAC 과 중간 우선순위의
+    VLAN 이 여기 담긴다. 하나로 접지 않는 이유는 이중화 CPU·다중 NIC 가 현장에서
+    예외가 아니기 때문이다 — 접으면 나머지가 조용히 사라진다.
+
+    `method` 가 출처다: `capture`(PCAP 관측) · `import`(사람이 CSV 로) ·
+    `manual` · `project_file`. 부품 버전과 같은 규율이다 (ADR-038).
+    """
+    ip: Optional[str] = None
+    mac: Optional[str] = None
+    hostname: Optional[str] = None
+    vlan: Optional[int] = None
+    method: Optional[str] = None
+    observed_at: Optional[str] = None
+    evidence_id: Optional[str] = None
+
+    @property
+    def observed_date(self):
+        return parse_ts(self.observed_at)
+
+    @property
+    def is_empty(self) -> bool:
+        return not any((self.ip, self.mac, self.hostname, self.vlan))
+
+
+@dataclass(frozen=True)
 class Network:
     protocols: Tuple[Protocol, ...] = ()
     remote_access: Optional[dict] = None
     observed_peers: Tuple[str, ...] = ()
     declared: bool = False       # 네트워크 정보를 아예 수집하지 않았으면 False
+    addresses: Tuple[NetworkAddress, ...] = ()
+
+    def _distinct(self, attr) -> Tuple:
+        """순서를 지키며 중복만 없앤다. 정렬하면 '처음 본 것' 이 사라진다."""
+        out = []
+        for a in self.addresses:
+            v = getattr(a, attr)
+            if v is not None and v not in out:
+                out.append(v)
+        return tuple(out)
+
+    @property
+    def ips(self) -> Tuple[str, ...]:
+        return self._distinct("ip")
+
+    @property
+    def macs(self) -> Tuple[str, ...]:
+        return self._distinct("mac")
+
+    @property
+    def hostnames(self) -> Tuple[str, ...]:
+        return self._distinct("hostname")
+
+    @property
+    def vlans(self) -> Tuple[int, ...]:
+        return self._distinct("vlan")
 
     @property
     def has_remote_access(self):
@@ -133,7 +187,16 @@ class Asset:
             r for r in self.remediation_evidence
             if (parse_ts(r.get("observed_at")) or date.min) <= as_of_date
         )
-        return replace(self, components=tuple(projected), remediation_evidence=rem)
+        # 주소도 관측이다. 투영하지 않으면 2월 판정이 9월에 처음 본 MAC 을
+        # 말하게 된다 — 재현성(불변 규칙 4)의 구멍이다 (ADR-042).
+        # 날짜가 없는 주소는 **남긴다** — 모르는 것을 '이후에 생겼다' 로 읽지 않는다.
+        addrs = tuple(
+            a for a in self.network.addresses
+            if a.observed_date is None or a.observed_date <= as_of_date
+        )
+        net = replace(self.network, addresses=addrs)
+        return replace(self, components=tuple(projected), remediation_evidence=rem,
+                       network=net)
 
     def remediation_for(self, advisory_id: str) -> Optional[dict]:
         for r in self.remediation_evidence:
@@ -180,7 +243,20 @@ def asset_from_dict(data: dict) -> Asset:
         ),
         remote_access=(net or {}).get("remote_access"),
         observed_peers=tuple((net or {}).get("observed_peers") or ()),
-        declared=net is not None,
+        # `declared` 는 '네트워크를 조사했는가' 다 — `has_remote_access` 를 거쳐
+        # H04 에 들어간다. 주소만 있는 블록이 이걸 켜면 "원격접속 없음" 이 되어
+        # 조사하지 않은 것이 '없음' 으로 붕괴한다 (불변 규칙 2).
+        declared=net is not None and (
+            "remote_access" in net or "services" in net or "protocols" in net
+            or "observed_peers" in net or net.get("declared") is True),
+        addresses=tuple(
+            NetworkAddress(
+                ip=a.get("ip"), mac=a.get("mac"), hostname=a.get("hostname"),
+                vlan=a.get("vlan"), method=a.get("method"),
+                observed_at=a.get("observed_at"), evidence_id=a.get("evidence_id"),
+            )
+            for a in ((net or {}).get("addresses") or ())
+        ),
     )
 
     return Asset(

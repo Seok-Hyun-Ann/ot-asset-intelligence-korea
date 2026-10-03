@@ -11,6 +11,7 @@ import type {
   AssetRow, Bucket, Ctx, Facets, Finding, ImportReport, MindMap, OpsResp,
   EvidenceResp, Exposure, ExposureResp, GroupDetail, LifecycleView, PathsResp,
   QueueScan, Question, Scanned, Status,
+  NetAddress,
 } from './types';
 
 export interface Route { screen: string; asset?: string; advisory?: string; }
@@ -650,7 +651,8 @@ export function AssetDetail({route, go}: Props) {
     id ? `/api/assets/${id}` : null, [tick]);
   const ex = useApi<ExposureResp>(id ? `/api/exposures?asset_id=${id}` : null, [id]);
   const fd = useApi<{findings: Finding[]; question: Question | null;
-                     scanned: Scanned; lifecycle: LifecycleView | null}>(
+                     scanned: Scanned; lifecycle: LifecycleView | null;
+                     addresses: NetAddress[]}>(
     id ? `/api/assets/${id}/findings` : null, [tick]);
   if (!id) return <PickAsset go={go} to="asset" title="자산 상세"
     lead="자산 하나를 열면 지금까지 아는 것, 그 자산에 대한 판정, 다음에 확인할 것 하나가 함께 나옵니다."/>;
@@ -713,6 +715,24 @@ export function AssetDetail({route, go}: Props) {
                   <tr key={k}><th style={{width: 92}}>{k}</th>
                     <td>{v ? <span className="m">{v}</span>
                            : <span className="k">{UNKNOWN}</span>}</td></tr>))}
+                {/* CISA 자산 인벤토리 고우선 속성 (ADR-042). 모르면 미상이다. */}
+                {(['ip', 'mac', 'hostname', 'vlan'] as const).map(k => {
+                  const vals = (fd.data?.addresses ?? [])
+                    .map((a: any) => a[k]).filter((v: any) => v !== null && v !== undefined);
+                  const src = (fd.data?.addresses ?? []).find((a: any) => a[k]);
+                  const label = {ip: 'IP 주소', mac: 'MAC 주소',
+                                 hostname: '장비 이름', vlan: 'VLAN'}[k];
+                  return (
+                    <tr key={k}><th>{label}</th>
+                      <td>{vals.length
+                        ? <><span className="m">{[...new Set(vals)].join(', ')}</span>
+                            {src?.method && <div className="k">
+                              {src.method === 'capture' ? '캡처에서 관측'
+                                : src.method === 'import' ? '사람이 입력' : src.method}
+                              {src.observed_at && ` · ${String(src.observed_at).slice(0, 10)}`}
+                            </div>}</>
+                        : <span className="k">{UNKNOWN}</span>}</td></tr>);
+                })}
                 {(b.components ?? []).map((c: any, i: number) => (
                   <tr key={'c' + i}><th>{componentText(c.type)}</th>
                     <td>{c.version?.raw

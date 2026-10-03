@@ -32,6 +32,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import struct
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -380,6 +381,92 @@ def scan_capture(path, *, mtime: Optional[str] = None,
     if scan.mtime is None:
         scan.mtime = _iso(scan.first_seen)
     return scan
+
+
+# ------------------------------------------------------------------ 자산으로
+
+#: 점 세 개로 끊긴 네 수 — 노드 id 가 IP 인지 보는 최소 체.
+_IPV4 = re.compile(r"^\d{1,3}(\.\d{1,3}){3}$")
+
+
+def _node_ips(node) -> List[str]:
+    """이 노드가 **선언한** IP. 캡처가 만든 토폴로지는 node_id 가 곧 IP 이고,
+    손으로 만든 토폴로지는 이름(`plc-fw48`)이라 `evidence.ip(s)` 로 적는다.
+
+    둘 다 사용자가 적은 선언이다 — 추측으로 잇지 않는다는 규칙은 그대로다.
+    """
+    out = []
+    if _IPV4.match(node.node_id or ""):
+        out.append(node.node_id)
+    ev = getattr(node, "evidence", None) or {}
+    one = ev.get("ip")
+    if isinstance(one, str) and one not in out:
+        out.append(one)
+    for ip in (ev.get("ips") or ()):
+        if isinstance(ip, str) and ip not in out:
+            out.append(ip)
+    return out
+
+
+def address_proposals(scan: CaptureScan, topology=None) -> Tuple[List[dict], List[str]]:
+    """캡처에서 본 주소를 **이미 선언된 자산에만** 제안한다 (ADR-042).
+
+    돌려주는 것: (제안 목록, 어느 자산인지 모르는 IP 목록)
+
+    **추측으로 잇지 않는다.** 캡처가 아는 것은 IP 이고 자산을 아는 것은
+    주문번호다. 둘을 잇는 근거는 **토폴로지 노드의 `asset_id` 선언** 하나뿐이다.
+    제조사가 같다는 것은 근거가 아니다 — 같은 제조사 장비가 수십 대다.
+
+    MAC 이 여럿인 끝점은 라우터 너머라 그 MAC 이 이 장비의 것이 아니다. IP 만
+    제안하고 MAC 은 뺀다 (ADR-039 와 같은 규율).
+    """
+    if topology is None:
+        return [], sorted(scan.endpoints)
+
+    by_ip = {}
+    for node in topology.nodes.values():
+        if not node.asset_id:
+            continue
+        for ip in _node_ips(node):
+            by_ip[ip] = node.asset_id
+
+    out, unlinked = [], []
+    for ip in sorted(scan.endpoints):
+        ep = scan.endpoints[ip]
+        aid = by_ip.get(ip)
+        if aid is None:
+            unlinked.append(ip)
+            continue
+        addr = {"ip": ip, "method": "capture",
+                "observed_at": scan.mtime,
+                "evidence_id": "pcap-%s" % scan.sha256[:12]}
+        if ep.macs and not ep.mac_ambiguous:
+            addr["mac"] = sorted(ep.macs)[0]
+        if len(ep.vlans) == 1:
+            addr["vlan"] = next(iter(ep.vlans))
+        out.append({
+            "asset_id": aid, "address": addr,
+            "basis": "토폴로지가 이 주소를 %s 로 선언했습니다" % aid,
+            "mac_ambiguous": ep.mac_ambiguous,
+            "vendor_hint": ep.vendor,
+        })
+    return out, unlinked
+
+
+def merge_address(body: dict, address: dict) -> bool:
+    """자산 본문에 주소를 **더한다**. 덮어쓰지 않는다 (불변 규칙 3).
+
+    같은 (ip, mac) 이 이미 있으면 아무것도 하지 않고 False 를 돌려준다 —
+    같은 캡처를 두 번 넣어도 목록이 불어나지 않는다.
+    """
+    net = body.setdefault("network", {})
+    addrs = net.setdefault("addresses", [])
+    key = (address.get("ip"), address.get("mac"))
+    for a in addrs:
+        if (a.get("ip"), a.get("mac")) == key:
+            return False
+    addrs.append(address)
+    return True
 
 
 # ------------------------------------------------------------------ 토폴로지로

@@ -382,7 +382,13 @@ def build_app(*, db: str, advisory_paths: List[Path], as_of: str,
             v = _lifecycle(asset, adv)
             if lv_best is None or (v.vendor_confirmed and not lv_best.vendor_confirmed):
                 lv_best = v
+        # CISA 자산 인벤토리 고우선 속성 (ADR-042). 없으면 미상으로 보인다.
+        _net = asset.network
         return {"findings": rows, "scanned": _scanned(asset, aov),
+                "addresses": [{"ip": a.ip, "mac": a.mac, "hostname": a.hostname,
+                               "vlan": a.vlan, "method": a.method,
+                               "observed_at": a.observed_at}
+                              for a in _net.addresses],
                 "lifecycle": None if lv_best is None else {
                     "state": lv_best.state,
                     "vendor_confirmed": lv_best.vendor_confirmed,

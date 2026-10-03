@@ -21,7 +21,7 @@ from .attack import find_bundle, load_attack
 from .bundle import (apply_bundle, export_bundle, generate_keypair,
                      read_current, rollback, verify_bundle)
 from .csvimport import apply_report, build_report
-from .safeio import UnsafeInput
+from .safeio import UnsafeInput, bounded_json_load
 from .policy import (DEFAULT_POLICY, active_policy, approve as policy_approve,
                      load_policy, preview as policy_preview,
                      rollback as policy_rollback, save_policy)
@@ -255,7 +255,7 @@ def _cmd_capture(args) -> int:
     관측된 통신만 담는다 — 캡처는 시간 창이라 안 보인 경로가 없는 것이 아니다.
     Purdue 레벨과 구역은 패킷에 없어 비워 두고, 사람이 채워야 한다.
     """
-    from .capture import scan_capture, to_topology
+    from .capture import address_proposals, merge_address, scan_capture, to_topology
 
     scan = scan_capture(args.file)
     doc = to_topology(scan)
@@ -315,6 +315,46 @@ def _cmd_capture(args) -> int:
             sys.stdout.write("    %s\n" % nid)
         if len(need) > 20:
             sys.stdout.write("    … 외 %d대\n" % (len(need) - 20))
+
+    # 캡처가 본 주소를 **이미 선언된 자산에만** 제안한다 (ADR-042).
+    if args.topology:
+        from .topology import load_topology as _lt
+        props, unlinked = address_proposals(scan, _lt(args.topology))
+        sys.stdout.write("\n자산에 붙일 주소 — 토폴로지가 선언한 것만\n")
+        if not props:
+            sys.stdout.write("  없음. 토폴로지에 asset_id 와 IP 를 함께 적어야 이어집니다.\n")
+        for p in props:
+            a = p["address"]
+            sys.stdout.write("  %-18s → %-24s IP %s%s%s\n"
+                             % (a["ip"], p["asset_id"], a["ip"],
+                                " · MAC %s" % a["mac"] if a.get("mac") else
+                                (" · MAC 여럿이라 뺌" if p["mac_ambiguous"] else ""),
+                                " · VLAN %s" % a["vlan"] if a.get("vlan") else ""))
+        if unlinked:
+            sys.stdout.write("  어느 자산인지 모르는 주소 %d개: %s%s\n"
+                             % (len(unlinked), ", ".join(unlinked[:6]),
+                                " 외" if len(unlinked) > 6 else ""))
+        if args.apply_addresses:
+            if not args.assets:
+                sys.stdout.write("\n--apply-addresses 에는 --assets 가 필요합니다.\n")
+                return 2
+            n = 0
+            for p in props:
+                f = args.assets / ("%s.json" % p["asset_id"])
+                if not f.exists():
+                    sys.stdout.write("  자산 파일 없음: %s\n" % f.name)
+                    continue
+                body = bounded_json_load(f)
+                if merge_address(body, p["address"]):
+                    f.write_text(json.dumps(body, ensure_ascii=False, indent=1,
+                                            sort_keys=True) + "\n", encoding="utf-8")
+                    n += 1
+            _audit(args, "capture_applied", subject=str(args.file),
+                   detail={"sha256": scan.sha256, "addresses": n})
+            sys.stdout.write("\n자산 %d개에 주소를 더했습니다 (덮어쓰지 않습니다).\n" % n)
+        elif props:
+            sys.stdout.write("  **아직 쓰지 않았습니다.** "
+                             "--apply-addresses --assets <디렉터리> 로 더합니다.\n")
 
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -750,6 +790,11 @@ def build_parser() -> argparse.ArgumentParser:
         "capture", help="캡처(pcap·pcapng)에서 토폴로지 만들기 (기본 dry-run)"))
     cap.add_argument("--file", required=True, type=Path, help="pcap 또는 pcapng")
     cap.add_argument("--out", type=Path, default=None, help="토폴로지 JSON 출력 경로")
+    cap.add_argument("--topology", type=Path, default=None,
+                     help="자산을 선언한 토폴로지. 주면 캡처가 본 주소를 그 자산에 제안한다")
+    cap.add_argument("--assets", type=Path, default=None, help="자산 JSON 디렉터리")
+    cap.add_argument("--apply-addresses", action="store_true", dest="apply_addresses",
+                     help="제안한 주소를 자산 파일에 실제로 더한다 (기본은 dry-run)")
     cap.add_argument("--as-of", required=True, dest="as_of")
     cap.set_defaults(func=_cmd_capture)
 

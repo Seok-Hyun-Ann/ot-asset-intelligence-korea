@@ -25,7 +25,7 @@
 
 ---
 
-## 1. CISA 자산 인벤토리 기준 대조 — 14개 중 9개
+## 1. CISA 자산 인벤토리 기준 대조 — 14개 중 12개  *(2026-10-03 ADR-042 로 9 → 12)*
 
 미국 CISA 가 2025년에 낸 [*Foundations for OT Cybersecurity: Asset Inventory Guidance*](https://www.cisa.gov/resources-tools/resources/foundations-ot-cybersecurity-asset-inventory-guidance-owners-and-operators)
 는 OT 자산 인벤토리가 **먼저 모아야 할 고우선 속성 14개**를 지정한다. 우리 자산 스키마
@@ -37,21 +37,21 @@
 | Asset criticality | ✅ | `operations.safety_criticality` |
 | Asset number | ✅ | `Asset.asset_id` |
 | Asset Role/Type | ✅ | `Asset.asset_type` |
-| **Hostname** | ❌ | — |
-| **IP address** | ❌ | — |
-| **Logging** | ❌ | — |
-| **MAC address** | ❌ | — |
+| Hostname | ⚠️ | `NetworkAddress.hostname` — 스키마는 있으나 **자동 수집원이 없다** (CSV 로만) |
+| IP address | ✅ | `NetworkAddress.ip` — 캡처·CSV (ADR-042) |
+| **Logging** | ❌ | — 구성·점검 사실이라 넣지 않았다 (ADR-042) |
+| MAC address | ✅ | `NetworkAddress.mac` — 캡처·CSV (ADR-042) |
 | Manufacturer | ✅ | `Identity.vendor_raw` |
 | Model | ✅ | `Identity.model_raw` |
 | Operating system | ⚠️ | `Component.type` 로 표현은 되나 전용 필드가 없다 |
 | Physical location/address | ⚠️ | `location.factory/zone` — 논리 구역이지 물리 주소가 아니다 |
 | Ports/services | ✅ | `Network.protocols[].port` |
-| **User accounts** | ❌ | — |
+| **User accounts** | ❌ | — 구성·점검 사실이라 넣지 않았다 (ADR-042) |
 
-중간 우선순위에서는 `Firmware/Software Version` ✅, **`VLAN` ❌**, `Department/Owner` ❌,
-`Serial Number` ❌.
+중간 우선순위에서는 `Firmware/Software Version` ✅, `VLAN` ✅(ADR-042),
+`Department/Owner` ❌, `Serial Number` ❌.
 
-### 이 중 셋은 "없어서" 가 아니라 **"뽑아 놓고 버려서"** 다
+### ~~이 중 셋은 "없어서" 가 아니라 "뽑아 놓고 버려서" 다~~ → **닫았다 (ADR-042)**
 
 `otai/capture.py` 는 PCAP 에서 이것들을 실제로 뽑는다. 합성 캡처 한 개로 확인:
 
@@ -59,9 +59,10 @@
 캡처가 실제로 뽑은 것 →  IP: 10.20.3.11 · MAC: 00:1B:1B:AA:BB:CC · 제조사: Siemens · VLAN: (해당 캡처엔 없음)
 ```
 
-그런데 `to_topology()` 가 이 값들을 **토폴로지 노드에만** 싣는다. 자산 쪽에는
-`Asset` 에 담을 필드가 없어서 들어가지 못한다. 즉 **수집은 되는데 자산 인벤토리에
-반영되지 않는다.** 가장 작고 가장 확실한 격차다.
+`to_topology()` 가 이 값들을 **토폴로지 노드에만** 싣고 자산에는 담을 필드가 없었다.
+**ADR-042 에서 닫았다** — `NetworkAddress` 를 추가하고, `otai capture --topology` 가
+**토폴로지가 `asset_id` 를 선언한 장비에만** 주소를 제안한다(추측으로 잇지 않는다).
+못 이은 주소는 숫자로 말하고, 기본은 dry-run 이다.
 
 ---
 
@@ -142,7 +143,7 @@ CISA 의 CSET(Cyber Security Evaluation Tool)은 IEC 62443 · NIST 800-82 · NER
 | **CISA KEV** | `H01` 의 전제조건 | ✅ 구현 (`otai/kev.py`, `dateAdded` 시점 필터까지) |
 | **ATT&CK for ICS** | 엣지 타입 → 기법 | ✅ 구현. 단 3개 기법만 매핑 (근거 없는 귀속 금지, 표 32) |
 | **IEC 62443 Zone/Conduit** | 토폴로지 모델 그 자체 | ⚠️ 구조는 이미 일치. **명시적 선언이 없다** |
-| **CISA 자산 인벤토리 지침** | `Asset` 스키마 | ⚠️ 14개 중 9개 (§1) |
+| **CISA 자산 인벤토리 지침** | `Asset` 스키마 | ⚠️ 14개 중 12개 — ADR-042 로 9→12 (§1) |
 | **SSVC** | 버킷 유도 근거 | ❌ 기획서만. 아래 참조 |
 | **CSAF VEX** | 입력은 ✅, 출력은 ❌ | 절반 |
 | **CycloneDX/SPDX SBOM** | `Component` 채우기 | ❌ |
@@ -185,7 +186,7 @@ Huff 외, [*I Can't Patch My OT Systems!*](https://arxiv.org/abs/2510.06951) (20
 
 | 순위 | 할 일 | 어느 모듈을 늘리나 | 품 |
 |:--:|---|---|---|
-| **a** | **IP·MAC·호스트명·VLAN 을 `Asset` 에** + 캡처→자산 다리 | `model.py` · `capture.py` | 작음 |
+| ~~a~~ | ~~IP·MAC·호스트명·VLAN 을 `Asset` 에 + 캡처→자산 다리~~ → **완료 (ADR-042)** | `model.py` · `capture.py` · `csvimport.py` | — |
 | **b** | **SBOM 입력** (CycloneDX → `Component`) | 새 `otai/sbom.py`, `safeio` 경유 | 중간 |
 | **c** | **VEX 출력** (9상태 → CSAF VEX / OpenVEX) | `applicability.Decision` 에 내보내기 | 중간 |
 | **d** | **Zeek 로그 입력** (ICSNPP `*.log` → 토폴로지·프로토콜) | `capture.py` 와 같은 모양의 `otai/zeeklog.py` | 중간 |

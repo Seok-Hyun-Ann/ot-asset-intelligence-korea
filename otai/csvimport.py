@@ -38,6 +38,11 @@ SYNONYMS: Dict[str, Tuple[str, ...]] = {
     "location.zone": ("zone", "구역", "cell", "셀", "라인"),
     "operations.safety_criticality": ("safety", "안전중요도", "safety_criticality", "안전"),
     "lifecycle_status": ("lifecycle", "수명주기", "eol", "lifecycle_status"),
+    # CISA 자산 인벤토리 지침의 고우선 속성 (ADR-042). 사람이 아는 것은 사람이 넣는다.
+    "address.ip": ("ip", "ip address", "ip주소", "아이피", "ipaddress"),
+    "address.mac": ("mac", "mac address", "mac주소", "맥주소", "macaddress"),
+    "address.hostname": ("hostname", "호스트명", "host name", "장비명", "컴퓨터이름"),
+    "address.vlan": ("vlan", "vlan id", "브이랜"),
 }
 
 REQUIRED = ("asset_id",)
@@ -157,6 +162,23 @@ def build_report(csv_path, mapping_override: Optional[dict] = None,
                 })
             elif value:
                 _set_path(asset, field_name, value)
+
+        # 주소 네 칸은 **한 레코드**로 모은다 — 따로 흩어 두면 어느 IP 의 MAC
+        # 인지 알 수 없다. 사람이 적은 값이므로 method 는 import 다 (ADR-042).
+        a = asset.pop("address", None)
+        if a:
+            rec = {"method": "import",
+                   "evidence_id": "ev-csv-%s-line%d" % (Path(csv_path).stem, line)}
+            for k in ("ip", "mac", "hostname"):
+                if a.get(k):
+                    rec[k] = a[k]
+            if a.get("vlan"):
+                try:
+                    rec["vlan"] = int(str(a["vlan"]).strip())
+                except ValueError:
+                    pass          # 숫자가 아니면 **버린다** — 추측해서 넣지 않는다
+            if len(rec) > 2:      # method·evidence_id 말고 실제 값이 있을 때만
+                asset.setdefault("network", {}).setdefault("addresses", []).append(rec)
 
         aid = asset.get("asset_id")
         if not aid:

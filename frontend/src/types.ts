@@ -104,6 +104,17 @@ export interface AssetRow {
   synthetic?: boolean;
 }
 
+/** 자산의 주소 하나. CISA 자산 인벤토리 고우선 속성 (ADR-042).
+ *  값이 아니라 **관측**이라 출처(method)와 시점이 함께 간다. */
+export interface NetAddress {
+  ip: string | null;
+  mac: string | null;
+  hostname: string | null;
+  vlan: number | null;
+  method: string | null;
+  observed_at: string | null;
+}
+
 /** 대조 규모 — '나머지는 안전' 이 아니라 '나머지는 대상 제품이 아님' 을 말하기 위한 값 */
 export interface Scanned {
   total: number; considered: number; excluded: number;
