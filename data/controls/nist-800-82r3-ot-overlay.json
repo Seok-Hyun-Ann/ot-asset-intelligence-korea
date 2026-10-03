@@ -1,0 +1,2343 @@
+{
+ "standard": {
+  "id": "NIST-SP-800-82r3-OT-OVERLAY",
+  "title": "NIST SP 800-82 Rev. 3 — Guide to Operational Technology (OT) Security",
+  "chapter": "Appendix F. OT Overlay",
+  "edition": "Revision 3 (September 2023)",
+  "publisher": "National Institute of Standards and Technology (NIST)",
+  "url": "https://doi.org/10.6028/NIST.SP.800-82r3",
+  "supersedes": "SP 800-82 Rev. 2 (May 2015) — withdrawn 2023-09-28",
+  "basis": "SP 800-53 Rev. 5 통제의 OT 재단(overlay)",
+  "controls": 229,
+  "source_note": "미국 정부 저작물로 미국 내 저작권 대상이 아니며 출처 표기를 권장한다. 통제 ID·이름·통제군과 매핑한 항목의 짧은 인용만 싣는다 — 통제 본문은 SP 800-53 Rev.5 원문에 있고 오버레이 자신도 그것을 복제하지 않는다."
+ },
+ "disclaimer": "이 표는 **근거 제공** 범위를 적은 것이지 통제 이행 여부 판정이 아니다. 기준선 선정(LOW/MOD/HIGH)과 재단은 조직이 수행한다.",
+ "controls": [
+  {
+   "code": "AC-1",
+   "name": "Access Control Policy And Procedures",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-3",
+   "name": "Access Enforcement",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-4",
+   "name": "Information Flow Enforcement",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "partial",
+   "evidence_kind": [
+    "topology",
+    "blocking_candidates",
+    "attack_paths"
+   ],
+   "overlay_quote": "industrial OT protocols may be restricted using inbound and outbound traffic rules on a network control device between OT and IT networks",
+   "note": "관측된 통신 흐름과, 끊었을 때 공격 경로가 사라지는 차단 후보를 낸다. 정상 업무 통신에 미치는 영향도 함께 세어 둘을 정수 두 개로 비교한다(설계 원칙 P6)."
+  },
+  {
+   "code": "AC-5",
+   "name": "Separation Of Duties",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-6",
+   "name": "Least Privilege",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-7",
+   "name": "Unsuccessful Logon Attempts",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-8",
+   "name": "System Use Notification",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-10",
+   "name": "Concurrent Session Control",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-11",
+   "name": "Device Lock",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-12",
+   "name": "Session Termination",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-14",
+   "name": "Permitted Actions Without Identification Or Authentication",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-17",
+   "name": "Remote Access",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-18",
+   "name": "Wireless Access",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-19",
+   "name": "Access Control For Mobile Devices",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-20",
+   "name": "Use Of External Systems",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-21",
+   "name": "Information Sharing",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AC-22",
+   "name": "Publicly Accessible Content",
+   "family": "AC",
+   "family_ko": "접근통제",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AT-1",
+   "name": "Policy And Procedures",
+   "family": "AT",
+   "family_ko": "인식·교육",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AT-2",
+   "name": "Literacy Training And Awareness",
+   "family": "AT",
+   "family_ko": "인식·교육",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AT-3",
+   "name": "Role-Based Training",
+   "family": "AT",
+   "family_ko": "인식·교육",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AT-4",
+   "name": "Training Records",
+   "family": "AT",
+   "family_ko": "인식·교육",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AU-1",
+   "name": "Audit And Accountability Policy And Procedures",
+   "family": "AU",
+   "family_ko": "감사·책임추적",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AU-2",
+   "name": "Event Logging",
+   "family": "AU",
+   "family_ko": "감사·책임추적",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AU-3",
+   "name": "Content Of Audit Records",
+   "family": "AU",
+   "family_ko": "감사·책임추적",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AU-4",
+   "name": "Audit Log Storage Capacity",
+   "family": "AU",
+   "family_ko": "감사·책임추적",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AU-5",
+   "name": "Response To Audit Logging Process Failures",
+   "family": "AU",
+   "family_ko": "감사·책임추적",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AU-6",
+   "name": "Audit Record Review, Analysis, And Reporting",
+   "family": "AU",
+   "family_ko": "감사·책임추적",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AU-7",
+   "name": "Audit Record Reduction And Report Generation",
+   "family": "AU",
+   "family_ko": "감사·책임추적",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AU-8",
+   "name": "Time Stamps",
+   "family": "AU",
+   "family_ko": "감사·책임추적",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AU-9",
+   "name": "Protection Of Audit Information",
+   "family": "AU",
+   "family_ko": "감사·책임추적",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AU-10",
+   "name": "Non-Repudiation",
+   "family": "AU",
+   "family_ko": "감사·책임추적",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AU-11",
+   "name": "Audit Record Retention",
+   "family": "AU",
+   "family_ko": "감사·책임추적",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "AU-12",
+   "name": "Audit Record Generation",
+   "family": "AU",
+   "family_ko": "감사·책임추적",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CA-1",
+   "name": "Policy And Procedures",
+   "family": "CA",
+   "family_ko": "평가·인가·모니터링",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CA-2",
+   "name": "Control Assessments",
+   "family": "CA",
+   "family_ko": "평가·인가·모니터링",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CA-3",
+   "name": "Information Exchange",
+   "family": "CA",
+   "family_ko": "평가·인가·모니터링",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CA-5",
+   "name": "Plan Of Action And Milestones",
+   "family": "CA",
+   "family_ko": "평가·인가·모니터링",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CA-6",
+   "name": "Authorization",
+   "family": "CA",
+   "family_ko": "평가·인가·모니터링",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CA-7",
+   "name": "Continuous Monitoring",
+   "family": "CA",
+   "family_ko": "평가·인가·모니터링",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CA-8",
+   "name": "Penetration Testing",
+   "family": "CA",
+   "family_ko": "평가·인가·모니터링",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CA-9",
+   "name": "Internal System Connections",
+   "family": "CA",
+   "family_ko": "평가·인가·모니터링",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CM-1",
+   "name": "Policy And Procedures",
+   "family": "CM",
+   "family_ko": "형상관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CM-2",
+   "name": "Baseline Configuration",
+   "family": "CM",
+   "family_ko": "형상관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CM-3",
+   "name": "Configuration Change Control",
+   "family": "CM",
+   "family_ko": "형상관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CM-4",
+   "name": "Impact Analyses",
+   "family": "CM",
+   "family_ko": "형상관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CM-5",
+   "name": "Access Restrictions For Change",
+   "family": "CM",
+   "family_ko": "형상관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CM-6",
+   "name": "Configuration Settings",
+   "family": "CM",
+   "family_ko": "형상관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CM-7",
+   "name": "Least Functionality",
+   "family": "CM",
+   "family_ko": "형상관리",
+   "our_scope": "partial",
+   "evidence_kind": [
+    "exposure_finding"
+   ],
+   "overlay_quote": "The organization implements least functionality by allowing only the specified functions, protocols, and/or services required for OT operations … Ports are part of the address space",
+   "note": "열려 있는 제어 프로토콜 서버와 포트를 표 4 의 노출 위험으로 낸다. **'운영에 필요한가' 는 우리가 정하지 않는다** — 공정 요구를 알아야 하고, 모르는 것을 불필요로 단정하면 가동을 멈추는 조치를 권하게 된다."
+  },
+  {
+   "code": "CM-8",
+   "name": "System Component Inventory",
+   "family": "CM",
+   "family_ko": "형상관리",
+   "our_scope": "direct",
+   "evidence_kind": [
+    "asset_inventory",
+    "identity_completeness",
+    "network_addresses"
+   ],
+   "overlay_quote": null,
+   "note": "자산 인벤토리 그 자체다. 식별(제조사·모델·주문번호)·부품 버전·주소(IP·MAC·VLAN)를 출처·시점과 함께 든다(ADR-042). 오버레이는 이 통제에 OT 전용 설명을 덧붙이지 않는다 — 800-53 원문이 그대로 적용된다. **설치 소프트웨어 목록은 아직 없다**(SBOM 입력 필요)."
+  },
+  {
+   "code": "CM-9",
+   "name": "Configuration Management Plan",
+   "family": "CM",
+   "family_ko": "형상관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CM-10",
+   "name": "Software Usage Restrictions",
+   "family": "CM",
+   "family_ko": "형상관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CM-11",
+   "name": "User-Installed Software",
+   "family": "CM",
+   "family_ko": "형상관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CM-12",
+   "name": "Information Location",
+   "family": "CM",
+   "family_ko": "형상관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CP-1",
+   "name": "Policy And Procedures",
+   "family": "CP",
+   "family_ko": "비상계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CP-2",
+   "name": "Contingency Plan",
+   "family": "CP",
+   "family_ko": "비상계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CP-3",
+   "name": "Contingency Training",
+   "family": "CP",
+   "family_ko": "비상계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CP-4",
+   "name": "Contingency Plan Testing",
+   "family": "CP",
+   "family_ko": "비상계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CP-6",
+   "name": "Alternate Storage Site",
+   "family": "CP",
+   "family_ko": "비상계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CP-7",
+   "name": "Alternate Processing Site",
+   "family": "CP",
+   "family_ko": "비상계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CP-8",
+   "name": "Telecommunications Services",
+   "family": "CP",
+   "family_ko": "비상계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CP-9",
+   "name": "System Backup",
+   "family": "CP",
+   "family_ko": "비상계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CP-10",
+   "name": "System Recovery And Reconstitution",
+   "family": "CP",
+   "family_ko": "비상계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "CP-12",
+   "name": "Safe Mode",
+   "family": "CP",
+   "family_ko": "비상계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IA-1",
+   "name": "Policy And Procedures",
+   "family": "IA",
+   "family_ko": "식별·인증",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IA-3",
+   "name": "Device Identification And Authentication",
+   "family": "IA",
+   "family_ko": "식별·인증",
+   "our_scope": "partial",
+   "evidence_kind": [
+    "exposure_finding",
+    "network_addresses",
+    "capture_endpoints"
+   ],
+   "overlay_quote": "OT devices may not inherently support device authentication … physical security measures that prevent unauthorized communication between devices can be used as compensating controls",
+   "note": "인증 없는 제어 프로토콜이 열려 있는지와, 캡처에서 본 장비 주소(MAC·IP)를 낸다. **MAC 은 랜카드 제조사까지만** 말한다 — 장비 인증의 대체물이 아니다(ADR-039)."
+  },
+  {
+   "code": "IA-4",
+   "name": "Identifier Management",
+   "family": "IA",
+   "family_ko": "식별·인증",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IA-5",
+   "name": "Authenticator Management",
+   "family": "IA",
+   "family_ko": "식별·인증",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IA-6",
+   "name": "Authentication Feedback",
+   "family": "IA",
+   "family_ko": "식별·인증",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IA-7",
+   "name": "Cryptographic Module Authentication",
+   "family": "IA",
+   "family_ko": "식별·인증",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IA-11",
+   "name": "Re-Authentication",
+   "family": "IA",
+   "family_ko": "식별·인증",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IA-12",
+   "name": "Identity Proofing",
+   "family": "IA",
+   "family_ko": "식별·인증",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IR-1",
+   "name": "Policy And Procedures",
+   "family": "IR",
+   "family_ko": "사고대응",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IR-2",
+   "name": "Incident Response Training",
+   "family": "IR",
+   "family_ko": "사고대응",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IR-3",
+   "name": "Incident Response Testing",
+   "family": "IR",
+   "family_ko": "사고대응",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IR-4",
+   "name": "Incident Handling",
+   "family": "IR",
+   "family_ko": "사고대응",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IR-5",
+   "name": "Incident Monitoring",
+   "family": "IR",
+   "family_ko": "사고대응",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IR-6",
+   "name": "Incident Reporting",
+   "family": "IR",
+   "family_ko": "사고대응",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IR-7",
+   "name": "Incident Response Assistance",
+   "family": "IR",
+   "family_ko": "사고대응",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "IR-8",
+   "name": "Incident Response Plan",
+   "family": "IR",
+   "family_ko": "사고대응",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "MA-1",
+   "name": "Policy And Procedures",
+   "family": "MA",
+   "family_ko": "유지보수",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "MA-2",
+   "name": "Controlled Maintenance",
+   "family": "MA",
+   "family_ko": "유지보수",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "MA-3",
+   "name": "Maintenance Tools",
+   "family": "MA",
+   "family_ko": "유지보수",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "MA-4",
+   "name": "Nonlocal Maintenance",
+   "family": "MA",
+   "family_ko": "유지보수",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "MA-5",
+   "name": "Maintenance Personnel",
+   "family": "MA",
+   "family_ko": "유지보수",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "MA-6",
+   "name": "Timely Maintenance",
+   "family": "MA",
+   "family_ko": "유지보수",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "MA-7",
+   "name": "Field Maintenance",
+   "family": "MA",
+   "family_ko": "유지보수",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "MP-1",
+   "name": "Policy And Procedures",
+   "family": "MP",
+   "family_ko": "매체보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "MP-2",
+   "name": "Media Access",
+   "family": "MP",
+   "family_ko": "매체보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "MP-3",
+   "name": "Media Marking",
+   "family": "MP",
+   "family_ko": "매체보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "MP-4",
+   "name": "Media Storage",
+   "family": "MP",
+   "family_ko": "매체보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "MP-5",
+   "name": "Media Transport",
+   "family": "MP",
+   "family_ko": "매체보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "MP-6",
+   "name": "Media Sanitization",
+   "family": "MP",
+   "family_ko": "매체보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "MP-7",
+   "name": "Media Use",
+   "family": "MP",
+   "family_ko": "매체보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-1",
+   "name": "Policy And Procedures",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-2",
+   "name": "Physical Access Authorizations",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-3",
+   "name": "Physical Access Control",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-4",
+   "name": "Access Control For Transmission",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-5",
+   "name": "Access Control For Output Devices",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-6",
+   "name": "Monitoring Physical Access",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-8",
+   "name": "Visitor Access Records",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-9",
+   "name": "Power Equipment And Cabling",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-10",
+   "name": "Emergency Shutoff",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-11",
+   "name": "Emergency Power",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-12",
+   "name": "Emergency Lighting",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-13",
+   "name": "Fire Protection",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-14",
+   "name": "Environmental Controls",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-15",
+   "name": "Water Damage Protection",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-16",
+   "name": "Delivery And Removal",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-17",
+   "name": "Alternate Work Site",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-18",
+   "name": "Location Of System Components",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-21",
+   "name": "Electromagnetic Pulse Protection",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PE-22",
+   "name": "Component Marking",
+   "family": "PE",
+   "family_ko": "물리·환경",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PL-1",
+   "name": "Policy And Procedures",
+   "family": "PL",
+   "family_ko": "계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PL-2",
+   "name": "System Security And Privacy Plans",
+   "family": "PL",
+   "family_ko": "계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PL-4",
+   "name": "Rules Of Behavior",
+   "family": "PL",
+   "family_ko": "계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PL-7",
+   "name": "Concept Of Operations",
+   "family": "PL",
+   "family_ko": "계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PL-8",
+   "name": "Security And Privacy Architectures",
+   "family": "PL",
+   "family_ko": "계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PL-9",
+   "name": "Central Management",
+   "family": "PL",
+   "family_ko": "계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PL-10",
+   "name": "Baseline Selection",
+   "family": "PL",
+   "family_ko": "계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PL-11",
+   "name": "Baseline Tailoring",
+   "family": "PL",
+   "family_ko": "계획",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-1",
+   "name": "Information Security Program Plan",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-2",
+   "name": "Information Security Program Leadership Role",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-3",
+   "name": "Information Security And Privacy Resources",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-4",
+   "name": "Plan Of Action And Milestones Process",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-5",
+   "name": "System Inventory",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-6",
+   "name": "Measures Of Performance",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-7",
+   "name": "Enterprise Architecture",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-8",
+   "name": "Critical Infrastructure Plan",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-9",
+   "name": "Risk Management Strategy",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-10",
+   "name": "Authorization Process",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-11",
+   "name": "Mission And Business Process Definition",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-12",
+   "name": "Insider Threat Program",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-13",
+   "name": "Security And Privacy Workforce",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-14",
+   "name": "Testing, Training, And Monitoring",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-15",
+   "name": "Security And Privacy Groups And Associations",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-16",
+   "name": "T Hreat Awareness Program",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-17",
+   "name": "Protecting Controlled Unclassified Information On External Systems",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-18",
+   "name": "Privacy Program Plan",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-19",
+   "name": "Privacy Program Leadership Role",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-20",
+   "name": "Dissemination Of Privacy Program Information",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-21",
+   "name": "Accounting Of Disclosures",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-22",
+   "name": "Personally Identifiable Information Quality Management",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-23",
+   "name": "Data Governance Body",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-24",
+   "name": "Data Integrity Board",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-25",
+   "name": "Minimization Of Personally Identifiable Information Used In Testing,",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-26",
+   "name": "Complaint Management",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-27",
+   "name": "Privacy Reporting",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-28",
+   "name": "Risk Framing",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-29",
+   "name": "Risk Management Program Leadership Roles",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-30",
+   "name": "Supply Chain Risk Management Strategy",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-31",
+   "name": "Continuous Monitoring Strategy",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PM-32",
+   "name": "Purposing",
+   "family": "PM",
+   "family_ko": "프로그램관리",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PS-1",
+   "name": "Policy And Procedures",
+   "family": "PS",
+   "family_ko": "인적보안",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PS-2",
+   "name": "Position Risk Designation",
+   "family": "PS",
+   "family_ko": "인적보안",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PS-3",
+   "name": "Personnel Screening",
+   "family": "PS",
+   "family_ko": "인적보안",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PS-4",
+   "name": "Personnel Termination",
+   "family": "PS",
+   "family_ko": "인적보안",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PS-5",
+   "name": "Personnel Transfer",
+   "family": "PS",
+   "family_ko": "인적보안",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PS-6",
+   "name": "Access Agreements",
+   "family": "PS",
+   "family_ko": "인적보안",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PS-7",
+   "name": "External Personnel Security",
+   "family": "PS",
+   "family_ko": "인적보안",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PS-8",
+   "name": "Personnel Sanctions",
+   "family": "PS",
+   "family_ko": "인적보안",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "PS-9",
+   "name": "Position Descriptions",
+   "family": "PS",
+   "family_ko": "인적보안",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "RA-1",
+   "name": "Policy And Procedures",
+   "family": "RA",
+   "family_ko": "위험평가",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "RA-2",
+   "name": "Security Categorization",
+   "family": "RA",
+   "family_ko": "위험평가",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "RA-3",
+   "name": "Risk Assessment",
+   "family": "RA",
+   "family_ko": "위험평가",
+   "our_scope": "partial",
+   "evidence_kind": [
+    "applicability_decision",
+    "topology",
+    "attack_paths"
+   ],
+   "overlay_quote": null,
+   "note": "공격 경로와 ATT&CK ICS 기법, 그리고 강제규칙이 만든 조치 등급을 낸다. **정확도는 주장하지 않는다** — 전문가 합의 골드셋이 없고 토폴로지가 합성이다(ADR-008/013). 위험평가의 입력이지 위험평가 자체가 아니다."
+  },
+  {
+   "code": "RA-5",
+   "name": "Vulnerability Monitoring And Scanning",
+   "family": "RA",
+   "family_ko": "위험평가",
+   "our_scope": "partial",
+   "evidence_kind": [
+    "applicability_decision"
+   ],
+   "overlay_quote": null,
+   "note": "**'모니터링' 쪽만 답한다.** 자산×권고문을 전수 대조해 해당 여부와 근거를 내고, 건너뛴 쌍이 정말 해당 없음인지 177만 쌍 전수 검사로 확인한다(ADR-030). **스캐닝은 하지 않는다** — 능동 질의는 현장 안전 때문에 금지다(불변 규칙 6). 이 통제의 scanning 요구는 다른 수단으로 충족해야 한다."
+  },
+  {
+   "code": "RA-7",
+   "name": "Risk Response",
+   "family": "RA",
+   "family_ko": "위험평가",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "RA-9",
+   "name": "Criticality Analysis",
+   "family": "RA",
+   "family_ko": "위험평가",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SA-1",
+   "name": "Policy And Procedures",
+   "family": "SA",
+   "family_ko": "획득",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SA-2",
+   "name": "Allocation Of Resources",
+   "family": "SA",
+   "family_ko": "획득",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SA-3",
+   "name": "System Development Life Cycle",
+   "family": "SA",
+   "family_ko": "획득",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SA-4",
+   "name": "Acquisition Process",
+   "family": "SA",
+   "family_ko": "획득",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SA-5",
+   "name": "System Documentation",
+   "family": "SA",
+   "family_ko": "획득",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SA-8",
+   "name": "Security And Privacy Engineering Principles",
+   "family": "SA",
+   "family_ko": "획득",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SA-9",
+   "name": "External System Services",
+   "family": "SA",
+   "family_ko": "획득",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SA-10",
+   "name": "Developer Configuration Management",
+   "family": "SA",
+   "family_ko": "획득",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SA-11",
+   "name": "Developer Testing And Evaluation",
+   "family": "SA",
+   "family_ko": "획득",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SA-15",
+   "name": "Development Process, Standards, And Tools",
+   "family": "SA",
+   "family_ko": "획득",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SA-16",
+   "name": "Developer-Provided Training",
+   "family": "SA",
+   "family_ko": "획득",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SA-17",
+   "name": "Developer Security And Privacy Architecture And Design",
+   "family": "SA",
+   "family_ko": "획득",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SA-21",
+   "name": "Developer Screening",
+   "family": "SA",
+   "family_ko": "획득",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SA-22",
+   "name": "Unsupported System Components",
+   "family": "SA",
+   "family_ko": "획득",
+   "our_scope": "direct",
+   "evidence_kind": [
+    "lifecycle",
+    "hard_rule_H04"
+   ],
+   "overlay_quote": "OT systems may contain system components that are no longer supported by the developer, vendor, or manufacturer … Organizations identify alternative methods … and consider additional compensating controls",
+   "note": "제조사 EOL/EOS 선언을 현장 기록보다 위에 두고(ADR-034), 지원 종료 + 원격접속 경계 + 버전 미상이면 H04 가 발화한다. 오버레이가 말하는 '대체 수단과 보상 통제' 가 우리 차단 후보와 같은 자리다. **무조건 패치 표현을 쓰지 않는다**(표 23)."
+  },
+  {
+   "code": "SC-1",
+   "name": "Policy And Procedures",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-2",
+   "name": "Separation Of System And User Functionality",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-3",
+   "name": "Security Function Isolation",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-4",
+   "name": "Information In Shared System Resources",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-5",
+   "name": "Denial-Of-Service Protection",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-7",
+   "name": "Boundary Protection",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "partial",
+   "evidence_kind": [
+    "reachability",
+    "attack_paths",
+    "topology"
+   ],
+   "overlay_quote": "The organization selects an appropriate failure mode (e.g., permit or block all communications).",
+   "note": "**반증 쪽으로만 답한다.** 모든 구간이 관측된 경로가 있으면 경계가 뚫려 있다는 근거다. 경로를 못 찾은 것은 '경계가 섰다' 가 아니다 — 토폴로지가 미완이거나 캡처가 시간 창일 수 있다(ADR-014/039)."
+  },
+  {
+   "code": "SC-8",
+   "name": "Transmission Confidentiality And Integrity",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "partial",
+   "evidence_kind": [
+    "plaintext_control"
+   ],
+   "overlay_quote": "Example compensating controls include physical protections, such as a secure conduit",
+   "note": "제어 명령이 암호 없이 오가는지(`encrypted=false`)를 낸다. 암호화 여부가 미상이면 발견이 아니라 **질문**으로 올린다(ADR-035). 오버레이가 드는 '물리적 보상 통제' 는 우리 조치 문구와 같은 방향이다."
+  },
+  {
+   "code": "SC-10",
+   "name": "Network Disconnect",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-12",
+   "name": "Cryptographic Key Establishment And Management",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-13",
+   "name": "Cryptographic Protection",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-15",
+   "name": "Collaborative Computing Devices",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-17",
+   "name": "Public Key Infrastructure Certificates",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-18",
+   "name": "Mobile Code",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-22",
+   "name": "Architecture And Provisioning For Name / Address Resolution Service",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-23",
+   "name": "Session Authenticity",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-24",
+   "name": "Fail In Known State",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-28",
+   "name": "Protection Of Information At Rest",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-32",
+   "name": "System Partitioning",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-39",
+   "name": "Process Isolation",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-41",
+   "name": "Port And I/O Device Access",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-45",
+   "name": "System Time Synchronization",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-47",
+   "name": "Alternate Communications Paths",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SC-51",
+   "name": "Hardware-Based Protection",
+   "family": "SC",
+   "family_ko": "시스템·통신보호",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SI-1",
+   "name": "Policy And Procedures",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SI-2",
+   "name": "Flaw Remediation",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "partial",
+   "evidence_kind": [
+    "applicability_decision",
+    "remediation_evidence",
+    "blocking_candidates"
+   ],
+   "overlay_quote": "Flaw remediation, or patching, is complicated since many OT employ OSs and other software that are no longer maintained by the vendors … the organization has no choice but to accept additional risk if no vendor patch is available",
+   "note": "무엇을 고쳐야 하는지(적용성 9상태)와, 고칠 수 없을 때의 보상 통제를 낸다. 패치 설치 증거가 있으면 `fixed` 로 확정한다. **패치를 적용하지는 않는다** — 조치 실행은 사람이 승인하고 수행한다(불변 규칙 8)."
+  },
+  {
+   "code": "SI-3",
+   "name": "Malicious Code Protection",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SI-4",
+   "name": "System Monitoring",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "partial",
+   "evidence_kind": [
+    "capture_endpoints",
+    "topology"
+   ],
+   "overlay_quote": "The organization ensures that the use of monitoring tools and techniques does not adversely impact the operational performance of the OT.",
+   "note": "**우리는 모니터링 시스템이 아니다.** 사용자가 준 캡처 파일을 읽어 그 시간 창에 오간 통신을 낼 뿐이고, 망에 아무것도 보내지 않는다 — 오버레이가 요구하는 '운영 성능에 영향을 주지 않음' 은 그래서 자동으로 성립한다. 지속 탐지는 별도 시스템(예: Zeek·IDS)이 필요하다."
+  },
+  {
+   "code": "SI-5",
+   "name": "Security Alerts, Advisories, And Directives",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SI-6",
+   "name": "Security And Privacy Function Verification",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SI-7",
+   "name": "Software, Firmware, And Information Integrity",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SI-8",
+   "name": "Spam Protection",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SI-10",
+   "name": "Information Input Validation",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SI-11",
+   "name": "Error Handling",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SI-12",
+   "name": "Information Management And Retention",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SI-13",
+   "name": "Predictable Failure Prevention",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SI-16",
+   "name": "Memory Protection",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SI-17",
+   "name": "Fail-Safe Procedures",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SI-22",
+   "name": "Information Diversity",
+   "family": "SI",
+   "family_ko": "시스템·정보무결성",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SR-1",
+   "name": "Policy And Procedures",
+   "family": "SR",
+   "family_ko": "공급망",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SR-2",
+   "name": "Supply Chain Risk Management Plan",
+   "family": "SR",
+   "family_ko": "공급망",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SR-3",
+   "name": "Supply Chain Controls And Processes",
+   "family": "SR",
+   "family_ko": "공급망",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SR-5",
+   "name": "Acquisition Strategies, Tools, And Methods",
+   "family": "SR",
+   "family_ko": "공급망",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SR-6",
+   "name": "Supplier Assessments And Reviews",
+   "family": "SR",
+   "family_ko": "공급망",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SR-8",
+   "name": "Notification Agreements",
+   "family": "SR",
+   "family_ko": "공급망",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SR-9",
+   "name": "Tamper Resistance And Detection",
+   "family": "SR",
+   "family_ko": "공급망",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SR-10",
+   "name": "Inspection Of Systems Or Components",
+   "family": "SR",
+   "family_ko": "공급망",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SR-11",
+   "name": "Component Authenticity",
+   "family": "SR",
+   "family_ko": "공급망",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  },
+  {
+   "code": "SR-12",
+   "name": "Component Disposal",
+   "family": "SR",
+   "family_ko": "공급망",
+   "our_scope": "none",
+   "evidence_kind": [],
+   "overlay_quote": null,
+   "note": null
+  }
+ ]
+}

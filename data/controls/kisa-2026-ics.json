@@ -80,7 +80,7 @@
    "our_scope": "partial",
    "gist": "불필요·취약한 서비스 제거 또는 보완대책",
    "evidence_kind": [
-    "exposure_finding"
+    "plaintext_control"
    ],
    "note": "평문 제어 프로토콜이 서버로 열려 있는지를 표 4 의 노출 위험으로 낸다. '불필요한가' 는 공정 요구를 알아야 답할 수 있어 우리가 정하지 않는다."
   },
@@ -118,7 +118,7 @@
    "our_scope": "partial",
    "gist": "제어 명령 등 중요 정보의 위변조·replay 방지 대책",
    "evidence_kind": [
-    "exposure_finding"
+    "plaintext_control"
    ],
    "note": "암호화 없이 제어 명령이 오가는지(`encrypted=false`)까지 답한다. `encrypted` 가 미상이면 발견이 아니라 질문으로 올린다(ADR-035). replay 방지 기법의 적용 여부는 장비 설정이라 답하지 못한다."
   },
@@ -482,7 +482,8 @@
    "gist": "허가에 의한 로직 변경 정책 수립",
    "evidence_kind": [
     "hard_rule_H02",
-    "exposure_finding"
+    "exposure_finding",
+    "exposure_crossref"
    ],
    "note": "무인증 원격 쓰기·로직 변경이 중요 자산에 도달하는지를 H02 로 낸다. 정책 '수립' 자체는 문서 작업이라 답하지 못하지만, 정책이 지켜지지 않는 기술적 상태는 근거로 낸다."
   },

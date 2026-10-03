@@ -1019,6 +1019,121 @@ T0855 가 사라져 매핑이 조용히 비었던 적이 있고, `verify_mapping
 
 ---
 
+## ADR-044 · 표준을 둘 싣는다 — 근거는 하나로 모은다
+
+ADR-043 에서 NIST 쪽은 **Rev.3 영문 원문이 필요하다**고 적고 미뤘다. 받아서 했다.
+
+### 받은 것
+
+`NIST SP 800-82 Rev. 3 — Guide to Operational Technology (OT) Security`
+(2023-09, 316쪽, https://doi.org/10.6028/NIST.SP.800-82r3). Rev.2 는 2023-09-28 에
+withdraw 됐고 이것이 대체판이다. 표지에 **"not subject to copyright in the United
+States. Attribution would, however, be appreciated by NIST"** — 미국 정부 저작물이라
+KISA 번역본과 달리 **인용할 수 있다.**
+
+우리가 읽은 곳은 **부록 F — OT Overlay**(230~315쪽)다. SP 800-53 Rev.5 통제를 OT 에
+맞춰 재단한 것으로, 다루는 통제가 **229개 · 19개 통제군**이다.
+
+**인용할 수 있어도 본문을 옮기지는 않는다.** 통제 ID·이름·통제군과, 매핑한 11개
+항목에 한해 근거가 된 **OT Discussion 의 짧은 인용**만 싣는다(최대 229자, 합계
+1,249자). 통제 본문은 800-53 Rev.5 에 있고 오버레이 자신도 그것을 복제하지 않는다.
+원문 PDF 는 `.gitignore` 로 막았다 — 받는 곳이 공개 URL 이라 다시 받으면 된다.
+
+### 229개 중 11개
+
+| 범위 | 수 | 통제 |
+|---|:--:|---|
+| **직접 근거** | 2 | `CM-8` System Component Inventory · `SA-22` Unsupported System Components |
+| **일부만** | 9 | `AC-4` · `CM-7` · `IA-3` · `RA-3` · `RA-5` · `SC-7` · `SC-8` · `SI-2` · `SI-4` |
+| **도구 범위 밖** | 218 | 정책·절차·물리·인적·비상계획·공급망 등 |
+
+매핑은 **OT Discussion 원문을 읽고** 정했다 — 통제 이름만 보고 짐작하지 않았다.
+오버레이가 OT 맥락을 덧붙이지 않은 통제(`CM-8` 이 그렇다)는 800-53 원문이 그대로
+적용된다는 사실까지 적었다.
+
+읽은 내용이 우리 설계와 같은 말을 하는 곳이 많았다. `SI-2`(Flaw Remediation)는
+*"the organization has no choice but to accept additional risk if no vendor patch is
+available"* 라고 적는다 — H04 의 '무조건 패치 표현 금지'(표 23)와 같다. `SA-22` 의
+*"identify alternative methods … and consider additional compensating controls"* 는
+우리 차단 후보와 같은 자리다. `SC-7` 은 *"selects an appropriate failure mode"* 를
+요구하고, `SI-4` 는 *"monitoring … does not adversely impact the operational
+performance of the OT"* 를 요구한다.
+
+### 답하지 않는 것을 통제 단위로 적었다
+
+- **`RA-5`(Vulnerability Monitoring and Scanning)는 절반만이다.** 모니터링 쪽은 답한다.
+  **스캐닝은 하지 않는다** — 능동 질의 금지는 불변 규칙 6 이고, 통제가 요구해도
+  바꾸지 않는다. 그 사실을 근거 문장에 싣는다.
+- **`SI-4`(System Monitoring) — 우리는 모니터링 시스템이 아니다.** 사용자가 준 캡처의
+  시간 창만 읽고 망에 아무것도 보내지 않는다. 오버레이가 요구하는 '운영 성능에 영향
+  없음' 은 그래서 자동으로 성립하지만, **지속 탐지는 별도 시스템이 필요하다.**
+- **`CM-7`(Least Functionality) — '운영에 필요한 통신인가' 를 우리가 정하지 않는다.**
+  열린 제어 프로토콜은 센다. 하지만 공정 요구를 모르는 채 불필요로 단정하면 가동을
+  멈추는 조치를 권하게 된다.
+- **`CM-8` 은 직접 근거인데 설치 소프트웨어 목록이 빈다.** SBOM 입력이 필요하다
+  (`GAP_ANALYSIS.md` 항목 b). 직접 근거라고 적고 빈 칸을 숨기지 않는다.
+- **`RA-3`(Risk Assessment)은 위험평가의 입력이지 위험평가가 아니다.** P0~P4 정확도를
+  주장하지 않는다는 ADR-008 이 여기서도 그대로다.
+
+### 항목 코드로 분기하지 않는다 — 근거 종류로 모은다
+
+ADR-043 의 `evidence_for` 는 `if code == "C-18"` 로 분기했다. 항목 9개일 때는 읽혔다.
+**표준이 둘이 되면 깨진다**: `C-18`(알려진 취약점 대응)과 `SI-2`(Flaw Remediation)는
+다른 어휘로 같은 것을 묻고 같은 근거를 쓴다. 코드마다 로직을 따로 쓰면 한쪽을 고칠 때
+다른 쪽이 조용히 멈춘다.
+
+그래서 근거를 **`evidence_kind` 종류별로 한 번** 만들고(`_gather`), 항목은 자기가
+쓰는 종류를 가리킨다. 생산자 16종, KISA 가 9개 항목에서 11종을, NIST 가 11개 항목에서
+12종을 가리킨다. 덕분에 `no_known_match` 를 근거로 세지 않는 보호(불변 규칙 1)가
+NIST 쪽에 **따로 쓰지 않아도** 걸린다 — 전용 테스트가 그것을 확인한다.
+
+표준마다 다른 것은 **무엇에 대한 근거로 말하는가**다. 같은 도달성 판정을 KISA `C-21`
+은 '망 분리', NIST `SC-7` 은 '경계 보호' 로 받는다. 그 어휘만 `_SEPARATION` 에 두고,
+사실은 한 곳에서 만든다.
+
+### 가리키는 이름에 생산자가 없으면 조용히 사라진다
+
+첫 생성본은 `kev` · `prefilter_sweep` · `attack_techniques` · `priority_buckets` 를
+가리켰다. **`evidence_for` 에 그런 입력이 없다.** 그대로 두면 `RA-5` 와 `RA-3` 은
+입력이 다 있어도 '근거 없음' 이 되고, 화면에는 아무 문제도 안 보인다 —
+`exposure.CONTROL_PROTOCOLS` 에서 `opcua` 가 빠졌던 것과 같은 함정이다 (ADR-040).
+
+막는 것 둘:
+
+| 테스트 | 막는 것 |
+|---|---|
+| `test_every_referenced_kind_has_a_producer` | 표준이 **없는 이름**을 가리키는 것. 실린 표준 전부를 훑는다 |
+| `test_every_assessable_control_can_reach_present` | 근거가 다 있는 자산에서 답할 수 있다고 적은 항목이 **하나라도** 침묵하는 것 |
+
+두 번째가 실제로 일을 했다. `C-08`·`C-12`·`C-24`·`C-26` 은 항목별 테스트가 없어서,
+`evidence_kind` 가 장식에서 열쇠로 바뀐 순간 조용히 멈출 수 있었다. 실제로 `C-08`·
+`C-12` 의 이름(`exposure_finding`)이 묻는 것(`plaintext_control`, 암호 없는 제어
+통신)과 달라서 고쳤다.
+
+반대 방향도 본다 — 아무 표준도 쓰지 않는 생산자가 남아 있으면 죽은 코드다.
+
+### `find_set` 하나만 고르던 것
+
+`find_set()` 은 `data/controls/*.json` 중 **첫 파일**을 돌려줬다. 파일이 하나일 때는
+맞았다. 두 번째가 들어오면 알파벳 순으로 KISA 가 먼저이므로 **NIST 표가 통째로
+보이지 않는다.** `find_sets()` · `load_all()` 로 바꾸고, 예전 이름은 호출자를 위해
+남겨 둔다. 테스트는 전부 `find_sets()` 를 돌며 표준마다 한 번씩 실행된다 —
+세 번째 표준(62443)이 들어오면 검사도 자동으로 따라간다.
+
+### 남은 한계
+
+- **기준선(LOW/MOD/HIGH) 선정과 재단은 조직이 한다.** 오버레이는 통제마다 기준선과
+  OT 전용 보강을 말하는데, 우리는 그 선정에 관여하지 않는다. `severity` 가 KISA 는
+  상/중/하이고 NIST 는 비어 있는 이유다 — 없는 값을 지어내지 않는다.
+- **이 매핑도 한 사람이 읽고 만든 것**이다. 통제별 `note` 에 무엇을 근거로 봤는지
+  적어 두었으니 이견이 있으면 그 줄을 고친다.
+- **통제 보강(enhancement, 예: `AC-4(21)`)은 매핑하지 않았다.** 오버레이가 기준선에
+  올린 보강이 있지만 상위 통제 단위로만 답한다.
+- **IEC 62443-3-3 은 아직 없다.** 표준 셋이 되면 `SR 1.1` 같은 요구사항 코드가
+  더해지는데, 근거는 이미 종류별로 모여 있으므로 표 하나를 더하는 일이다.
+
+---
+
 ## ADR-043 · 점검 항목에 근거를 댄다 — 준수를 판정하지 않는다
 
 **받은 것**: KISA 「주요정보통신기반시설 기술적 취약점 분석·평가 방법 상세가이드」

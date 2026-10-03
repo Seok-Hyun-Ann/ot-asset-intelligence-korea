@@ -229,6 +229,34 @@ python scripts/inventory.py --db data/otai.db                # 지금 무엇을 
 | **현장 안전** | 능동 스캔 없음. 사용자가 준 파일만 읽고, 신뢰할 수 없는 바이트는 전부 `otai/safeio.py` 를 거침 |
 | **LLM 경계** | 버전 비교 · 적용성 확정 · P0~P4 결정에 LLM 이 관여하지 않음. 전부 결정적 규칙 모듈 |
 
+## 표준 점검 항목에 근거를 댑니다 — 준수 판정은 하지 않습니다
+
+이미 내린 자산별 판정이 **어느 점검 항목의 근거가 되는지** 이어 줍니다.
+표준 2종, 항목 280개를 싣고 그중 **20개**에 기계가 만든 근거를 댑니다.
+
+| 표준 | 항목 | 근거를 대는 것 | 매핑 표 |
+|---|:--:|:--:|---|
+| KISA 「주요정보통신기반시설 기술적 취약점 분석·평가 방법 상세가이드」 2026 · `06. 제어시스템` | 51 | **9** | [`data/controls/kisa-2026-ics.json`](data/controls/kisa-2026-ics.json) |
+| NIST SP 800-82 Rev.3 `부록 F — OT Overlay` (SP 800-53 Rev.5 재단) | 229 | **11** | [`data/controls/nist-800-82r3-ot-overlay.json`](data/controls/nist-800-82r3-ot-overlay.json) |
+
+답할 수 없는 **260개를 그대로 싣습니다.** 우리가 답하는 것만 보여주면 안내서가 아니라
+홍보물이 됩니다.
+
+| 상태 | 뜻 |
+|---|---|
+| **근거 있음** | 이 항목에 댈 기계 판독 가능한 근거를 냈습니다 |
+| **근거 없음** | 낼 수 있는 항목인데 아직 근거가 없습니다. **미달이라는 뜻이 아닙니다** |
+| **도구가 답할 수 없음** | 정책·절차·물리·교육 항목입니다. **통과도 미달도 아닙니다** |
+
+**「양호」·「취약」·「준수」라고 말하지 않습니다.** 취약점 분석·평가는 정보통신기반
+보호법에 따라 자격을 갖춘 평가기관이 수행합니다. 그 어휘를 쓰면 할 수 없는 법적
+주장을 하는 것입니다. 답하지 않는 것도 항목마다 적습니다 — 예를 들어 NIST `RA-5`
+(Vulnerability Monitoring **and Scanning**)에서 모니터링 쪽은 답하고 **스캐닝은 하지
+않습니다.** 능동 질의는 현장 안전 때문에 금지입니다.
+
+표준 **원문은 저장소에 없습니다.** 매핑 표에는 항목 코드·중요도·분류명과 우리가 쓴
+한 줄 요약만 담습니다. 자세히는 [ADR-043 · ADR-044](docs/DECISIONS.md).
+
 ## 무엇을 주장하고 무엇을 주장하지 않는가
 
 **이 구분이 이 프로젝트의 핵심입니다.** 상세는 [`docs/VERIFICATION.md`](docs/VERIFICATION.md).
@@ -249,6 +277,8 @@ python scripts/inventory.py --db data/otai.db                # 지금 무엇을 
 | [CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) | 실제 악용 | 스냅샷 1건 — 공공 도메인 |
 | [Siemens ProductCERT](https://cert-portal.siemens.com/productcert/csaf/provider-metadata.json) | 벤더 권고문 | ✗ TLP:WHITE 재배포 미확인 |
 | [ATT&CK for ICS](https://github.com/mitre-attack/attack-stix-data) | 기법 분류 (v19.2 고정) | ✗ 4MB |
+| [NIST SP 800-82r3](https://doi.org/10.6028/NIST.SP.800-82r3) | OT Overlay 통제 매핑 | 매핑 표만 — 원문 PDF 는 공개 URL 에서 받습니다 |
+| [KISA 상세가이드 2026](https://www.krcert.or.kr/) | 제어시스템 점검항목 매핑 | 매핑 표만 — 원문은 재배포 금지 |
 
 `scripts/fetch_advisories.py` 가 전부 받아옵니다. 토폴로지는 **합성**이며 Purdue + IEC 62443 구조를 따릅니다.
 
@@ -257,7 +287,7 @@ python scripts/inventory.py --db data/otai.db                # 지금 무엇을 
 | 문서 | 내용 |
 |---|---|
 | [`docs/SPEC_v1.0.md`](docs/SPEC_v1.0.md) | 상세 기획서 (22장 + 부록, 표 52개) — 모든 설계의 1차 근거 |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADR 41개 — 무엇을 왜 그렇게 정했고, 무엇을 기각했고, 무엇이 한계인가 |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADR 44개 — 무엇을 왜 그렇게 정했고, 무엇을 기각했고, 무엇이 한계인가 |
 | [`docs/VERIFICATION.md`](docs/VERIFICATION.md) | 검증 매트릭스 — 무엇을 어떤 근거로 검증했는가 |
 | [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md) | 비슷한 공개 도구들과의 격차 — 무엇이 없고 어떻게 붙이는가 |
 
