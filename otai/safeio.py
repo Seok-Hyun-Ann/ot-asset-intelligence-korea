@@ -203,6 +203,23 @@ def bounded_json_loads(raw, *, max_bytes=MAX_JSON_BYTES, max_depth=MAX_JSON_DEPT
     return data
 
 
+def check_json_bounds(raw, *, max_bytes=MAX_JSON_BYTES, max_depth=MAX_JSON_DEPTH,
+                      name="<body>") -> None:
+    """**파싱하지 않고** 크기와 깊이만 본다. 통과하면 아무것도 돌려주지 않는다.
+
+    HTTP 본문처럼 **다른 곳이 파싱할 바이트**를 위한 것이다. `bounded_json_loads`
+    를 쓰면 같은 본문을 두 번 파싱하게 된다 — FastAPI 가 이미 파싱하기 때문이다.
+    여기서는 파싱 전 방어만 하고 파싱은 프레임워크에 맡긴다.
+    """
+    if len(raw) > max_bytes:
+        raise UnsafeInput("JSON 크기 %d > 상한 %d" % (len(raw), max_bytes), name)
+    try:
+        text = bytes(raw).decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise UnsafeInput("UTF-8 디코딩 실패: %s" % exc, name)
+    _textual_depth(text, max_depth)
+
+
 def bounded_json_load(path, *, max_bytes=MAX_JSON_BYTES, max_depth=MAX_JSON_DEPTH):
     path = Path(path)
     size = path.stat().st_size

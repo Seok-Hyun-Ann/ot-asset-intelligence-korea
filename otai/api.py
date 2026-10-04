@@ -36,7 +36,7 @@ from .paths import blocking_candidates, evaluate_reachability, find_paths
 from .policy import DEFAULT_POLICY, active_policy, preview as policy_preview
 from .priority import BUCKET_ORDER, BUCKET_PHRASES, LENS_PRESETS, evaluate_priority, sort_queue
 from .repo import Repo, completeness
-from .safeio import UnsafeInput
+from .safeio import MAX_JSON_BYTES, UnsafeInput, check_json_bounds
 from .capture import scan_capture, to_topology as capture_topology
 from .projectfile import (build_vocabulary, devices as project_devices,
                           scan_file, to_asset as project_asset)
@@ -63,6 +63,76 @@ def audit_dsn(db: str) -> str:
     SQLite 일 때만 파일을 나눈다 — 한 파일에 두 스키마를 넣던 기존 동작 유지.
     """
     return db if is_postgres(db) else str(db).replace(".db", "-audit.db")
+
+
+class BoundedBody:
+    """요청 본문을 `safeio` 한계 안에서만 들여보낸다 (ADR-041 · ADR-044).
+
+    `body: dict = Body(...)` 는 **FastAPI 가 먼저 파싱한다** — 우리 코드가 돌기
+    전이라 `MAX_JSON_BYTES` · `MAX_JSON_DEPTH` 가 전부 건너뛰어졌다. 그런데
+    `POST /api/assets` 는 append-only 저장소에 바로 쓰고, 이 서버에는 인증도
+    CSRF 토큰도 없다(127.0.0.1 전용이라는 고지뿐이다).
+
+    `otai/server.py` 의 단순한 입력 서버는 이미 본문을 묶고 있었다 — FastAPI
+    계층만 물려받지 못했다.
+
+    **핸들러를 async 로 바꾸지 않는다.** 바꾸면 동기 DB 쓰기가 스레드풀이 아니라
+    이벤트 루프에서 돌아 스윕 스레드와 함께 서버를 멈춘다. 그래서 ASGI 층에서
+    본문을 모아 검사하고 **그대로 다시 흘려보낸다** — 지금 라우트와 앞으로
+    추가될 라우트가 모두 덮인다.
+    """
+
+    #: 본문을 볼 메서드. GET·HEAD 는 본문이 없다.
+    METHODS = ("POST", "PUT", "PATCH")
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") != "http" or scope.get("method") not in self.METHODS:
+            return await self.app(scope, receive, send)
+
+        chunks, total = [], 0
+        while True:
+            message = await receive()
+            if message["type"] == "http.disconnect":
+                return
+            chunk = message.get("body", b"")
+            total += len(chunk)
+            if total > MAX_JSON_BYTES:
+                # 더 읽지 않는다. 읽어들이는 것 자체가 비용이다.
+                return await self._reject(
+                    send, 413, "본문 크기 %d바이트 초과 (상한 %d)"
+                    % (total, MAX_JSON_BYTES))
+            chunks.append(chunk)
+            if not message.get("more_body", False):
+                break
+        raw = b"".join(chunks)
+
+        if raw:
+            try:
+                check_json_bounds(raw, name=scope.get("path", "<body>"))
+            except UnsafeInput as exc:
+                return await self._reject(send, 400, str(exc))
+
+        replayed = False
+
+        async def replay():
+            nonlocal replayed
+            if replayed:
+                return {"type": "http.disconnect"}
+            replayed = True
+            return {"type": "http.request", "body": raw, "more_body": False}
+
+        return await self.app(scope, replay, send)
+
+    @staticmethod
+    async def _reject(send, status, detail):
+        payload = json.dumps({"detail": detail}, ensure_ascii=False).encode("utf-8")
+        await send({"type": "http.response.start", "status": status,
+                    "headers": [(b"content-type", b"application/json; charset=utf-8"),
+                                (b"content-length", str(len(payload)).encode())]})
+        await send({"type": "http.response.body", "body": payload})
 
 
 def build_app(*, db: str, advisory_paths: List[Path], as_of: str,
@@ -156,6 +226,7 @@ def build_app(*, db: str, advisory_paths: List[Path], as_of: str,
     threading.Thread(target=run_sweep, name="otai-sweep", daemon=True).start()
 
     app = FastAPI(title="OT 자산 취약점 관리", docs_url="/api/docs", redoc_url=None)
+    app.add_middleware(BoundedBody)
 
     # ---------------------------------------------------------------- 공통
     def _adv(advisory_id: str):

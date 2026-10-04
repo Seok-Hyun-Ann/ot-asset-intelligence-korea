@@ -303,7 +303,7 @@ python -m otai controls \
 | [`docs/VERIFICATION.md`](docs/VERIFICATION.md) | 검증 매트릭스 — 무엇을 어떤 근거로 검증했는가 |
 | [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md) | 비슷한 공개 도구들과의 격차 — 무엇이 없고 어떻게 붙이는가 |
 
-성능: `python scripts/bench_paths.py` — 10만 엣지 5홉 경로 질의 p95 0.62초 (기준 5초).
+성능: `python scripts/bench_paths.py` 로 직접 측정합니다. 실측값은 [`docs/DECISIONS.md`](docs/DECISIONS.md) 의 ADR-015 표에 있습니다 — 10만 엣지 5홉 질의가 기준(5초) 안쪽입니다.
 
 ## 기여
 
