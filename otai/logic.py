@@ -14,6 +14,16 @@ class Tri(enum.Enum):
     FALSE = "false"
     UNKNOWN = "unknown"
 
+    @property
+    def ko(self) -> str:
+        """사람에게 보일 표기. 화면·CLI 는 한국어가 기본이다 (NFR-LOC-001).
+
+        `.value` 를 그대로 찍으면 한국어 화면에 `true`/`unknown` 이 뜬다. 그리고
+        `unknown` 은 **언제나 '미상'** 이다 — 빈칸이나 `—` 로 두면 '없음' 으로
+        읽힌다 (ADR-031).
+        """
+        return _KO[self]
+
     def __bool__(self):  # noqa: D105
         raise TypeError(
             "Tri 를 bool 로 캐스팅할 수 없습니다. UNKNOWN 이 조용히 False 가 되는 것을 "
@@ -45,3 +55,7 @@ class Tri(enum.Enum):
         if v is Tri.FALSE:
             return Tri.TRUE
         return Tri.UNKNOWN
+
+
+#: 클래스 **밖에** 둔다 — 본문 안의 평범한 dict 는 enum 멤버로 잡힌다.
+_KO = {Tri.TRUE: "예", Tri.FALSE: "아니오", Tri.UNKNOWN: "미상"}

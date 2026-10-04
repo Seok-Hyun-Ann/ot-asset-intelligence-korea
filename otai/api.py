@@ -531,7 +531,7 @@ def build_app(*, db: str, advisory_paths: List[Path], as_of: str,
                   else "unknown")
         branch("paths", "공격 경로", "paths", rstate)
         if reach:
-            leaf("paths", "p_verdict", "도달성 %s" % reach.verdict.value, rstate, reach.reason)
+            leaf("paths", "p_verdict", "도달성 %s" % reach.verdict.ko, rstate, reach.reason)
             for i, p in enumerate((reach.confirmed_paths or reach.unconfirmed_paths)[:4]):
                 leaf("paths", "p%d" % i, "%d홉 · 확신도 %.2f" % (len(p.hops), p.confidence),
                      "observed" if p.is_confirmed else "inferred", " → ".join(p.nodes))

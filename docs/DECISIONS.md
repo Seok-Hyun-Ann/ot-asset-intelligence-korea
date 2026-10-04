@@ -1139,8 +1139,9 @@ def test_capture_topology_shape_is_the_one_that_trips_these():
 
 - **웹 화면에서 점검 항목 근거를 볼 수 없다** (`GAP_ANALYSIS.md` (h)). CLI 는 붙었다.
 - `otai ask` 서버와 FastAPI 가 본문 한계를 **각자** 들고 있다. 합칠 수 있다.
-- `cli.py` 와 `api.py` 가 도달성 판정을 `verdict.value` 로 **표시**한다 —
-  비교는 고쳤지만 사용자에게 `true`/`unknown` 이 영문으로 보인다. 한국어 매핑이 없다.
+- ~~`cli.py` 와 `api.py` 가 `verdict.value` 를 표시한다~~ → **고쳤다.** `Tri.ko`
+  (예 / 아니오 / **미상**)를 `logic.py` 에 두고 두 곳이 그걸 쓴다. 매핑을 클래스
+  본문 안에 두면 **enum 멤버로 잡히므로**(실제로 그랬다) 클래스 밖에 둔다.
 
 ---
 

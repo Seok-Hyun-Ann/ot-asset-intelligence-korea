@@ -146,7 +146,7 @@ def _cmd_paths(args) -> int:
                     " 외 %d대" % (len(_need) - 5) if len(_need) > 5 else ""))
         L.append("")
     if reach is not None:
-        L.append("도달성: %s — %s" % (reach.verdict.value, reach.reason))
+        L.append("도달성: %s — %s" % (reach.verdict.ko, reach.reason))
         L.append("")
     L.append("경로 %d개" % len(paths))
     for p in paths[: args.limit]:
