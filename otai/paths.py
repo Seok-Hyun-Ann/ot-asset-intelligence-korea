@@ -211,7 +211,7 @@ def evaluate_reachability(
       **진입점이 선언되지 않음**                    → UNKNOWN  ← false safe 방지
       **경로는 있으나 요구 능력의 근거가 없음**       → UNKNOWN  ← false safe 방지
 
-    뒤의 두 줄이 ADR-044 에서 더해졌다. 셋째 줄(FALSE)이 그 둘을 함께 삼키고 있었다 —
+    뒤의 두 줄이 ADR-045 에서 더해졌다. 셋째 줄(FALSE)이 그 둘을 함께 삼키고 있었다 —
     캡처에서 만든 토폴로지는 **진입점이 0개**이고(`capture.py` 는 그 값을 모른다),
     `grants` 는 선택 필드다. 둘 다 '모른다' 인데 '닿지 않는다' 로 접혔다.
     """

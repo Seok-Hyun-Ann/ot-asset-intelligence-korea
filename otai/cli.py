@@ -272,6 +272,11 @@ def _cmd_controls(args) -> int:
 
     asset = load_asset(args.asset)
     topo = load_topology(args.topology) if args.topology else None
+    # **`queue` 와 같은 입력을 준다.** `kev` 와 `max_cvss` 를 빼면 H01·H03 이 절대
+    # 발화하지 않는다 — 지금은 `hard_rule_H01` 을 가리키는 항목이 없어서 안 보이지만,
+    # 누군가 더하는 순간 CLI 에서만 조용히 침묵하게 된다 (ADR-044 의 그 함정이다).
+    snap = args.kev or find_snapshot()
+    kev = load_kev(snap) if snap else None
 
     # 적용성 판정 — queue 와 같은 사전 필터를 거친다 (ADR-030)
     from .identity import could_match, index_advisory
@@ -283,8 +288,9 @@ def _cmd_controls(args) -> int:
             if not could_match(asset, index_advisory(adv)):
                 continue              # 건너뛴 쌍은 no_known_match 로 확정이다
             d = decide_applicability(asset, adv, as_of=args.as_of)
-            findings.append(evaluate_priority(d, asset, topology=topo,
-                                              lens="default"))
+            findings.append(evaluate_priority(
+                d, asset, kev=kev, max_cvss=_max_cvss(adv, d.cves),
+                topology=topo, lens="default"))
 
     # 노출은 (발견, 질문) 튜플을 돌려준다 — 풀어서 넘긴다
     h02 = any("H02" in (f.fired_rules or ()) for f in findings)
@@ -877,6 +883,8 @@ def build_parser() -> argparse.ArgumentParser:
                     help="없으면 도달성은 미상으로 남는다 — '분리됐다' 가 아니다")
     ct.add_argument("--capture", type=Path, default=None,
                     help="pcap·pcapng — 그 시간 창에 통신한 끝점을 근거로 쓴다")
+    ct.add_argument("--kev", type=Path, default=None,
+                    help="KEV 스냅샷 경로 (기본: data/kev 의 최신). H01 의 전제조건이다")
     ct.add_argument("--standards", type=Path, default=Path("data/controls"),
                     help="점검 항목 표 디렉터리 (기본: data/controls)")
     ct.add_argument("--standard", default=None,

@@ -1108,6 +1108,23 @@ def test_capture_topology_shape_is_the_one_that_trips_these():
 `safeio.check_json_bounds` 를 더했다 — 크기·깊이만 보고 **파싱하지 않는다.**
 `bounded_json_loads` 를 쓰면 FastAPI 가 파싱할 본문을 두 번 파싱한다.
 
+**그리고 이 미들웨어가 회귀를 하나 만들었다 — 고쳤다.** 첫 판은 모든 POST 에
+`MAX_JSON_BYTES`(64MB) 하나를 걸었다. 그런데 캡처와 프로젝트 파일은 프런트엔드가
+`FileReader.readAsDataURL` 로 **base64 로 실어 보낸다**(`content_base64`). 본문이
+원본의 약 4/3 배가 되므로, 캡처 엔진이 `MAX_CAPTURE_BYTES`(512MB)까지 받는데
+**웹에서는 48MB 쯤에서 413 이 나고 CLI 와 웹이 갈렸다.** 실측: 70MB pcap →
+base64 93MB → `413 본문 크기 초과`.
+
+경로별 상한을 각 `safeio` 상한에서 역산한다(`BoundedBody.LIMITS`): 캡처 683MB ·
+프로젝트 파일 85MB · CSV 43MB · 그 외 64MB. 한 수를 전부에 걸면 파일 라우트가
+막히고, 가장 큰 수를 전부에 걸면 평범한 JSON 라우트가 512MB 를 받는다.
+
+텍스트 검사(깊이·UTF-8)는 **스스로 폼·바이너리라고 밝힌 content-type 만** 건너뛴다.
+`multipart/` · `octet-stream` · `x-www-form-urlencoded`. content-type 이 없거나
+모르는 값이면 검사한다 — 우리 라우트는 전부 JSON 이므로 그쪽이 안전한 기본값이다.
+앞으로 업로드 라우트가 생겼을 때 바이너리 본문을 **없는 문제로 거절**하지 않기
+위한 것이다.
+
 ### 감사의 권고를 하나 따르지 않았다
 
 `Tri.and_()` 가 인자 0개에서 `TRUE` 인 것을 `UNKNOWN` 으로 바꾸라는 권고가 있었다.
@@ -1139,6 +1156,11 @@ def test_capture_topology_shape_is_the_one_that_trips_these():
 
 - **웹 화면에서 점검 항목 근거를 볼 수 없다** (`GAP_ANALYSIS.md` (h)). CLI 는 붙었다.
 - `otai ask` 서버와 FastAPI 가 본문 한계를 **각자** 들고 있다. 합칠 수 있다.
+- `_cmd_controls` 가 `queue` 와 같은 파이프라인이라고 적으면서 `kev` 를 빼먹고
+  있었다 — H01·H03 이 CLI 에서 절대 발화하지 않았다. 지금은 `hard_rule_H01` 을
+  가리키는 항목이 없어서 안 보이지만, 더하는 순간 조용히 침묵한다. `--kev` 를
+  더하고 `find_snapshot()` 으로 기본값을 잡는다. **'같은 파이프라인' 이라고 쓸
+  때는 인자까지 같은지 보라.**
 - ~~`cli.py` 와 `api.py` 가 `verdict.value` 를 표시한다~~ → **고쳤다.** `Tri.ko`
   (예 / 아니오 / **미상**)를 `logic.py` 에 두고 두 곳이 그걸 쓴다. 매핑을 클래스
   본문 안에 두면 **enum 멤버로 잡히므로**(실제로 그랬다) 클래스 밖에 둔다.

@@ -36,7 +36,8 @@ from .paths import blocking_candidates, evaluate_reachability, find_paths
 from .policy import DEFAULT_POLICY, active_policy, preview as policy_preview
 from .priority import BUCKET_ORDER, BUCKET_PHRASES, LENS_PRESETS, evaluate_priority, sort_queue
 from .repo import Repo, completeness
-from .safeio import MAX_JSON_BYTES, UnsafeInput, check_json_bounds
+from .safeio import (MAX_CAPTURE_BYTES, MAX_CSV_BYTES, MAX_JSON_BYTES,
+                     MAX_XML_BYTES, UnsafeInput, check_json_bounds)
 from .capture import scan_capture, to_topology as capture_topology
 from .projectfile import (build_vocabulary, devices as project_devices,
                           scan_file, to_asset as project_asset)
@@ -66,7 +67,7 @@ def audit_dsn(db: str) -> str:
 
 
 class BoundedBody:
-    """요청 본문을 `safeio` 한계 안에서만 들여보낸다 (ADR-041 · ADR-044).
+    """요청 본문을 `safeio` 한계 안에서만 들여보낸다 (ADR-041 · ADR-045).
 
     `body: dict = Body(...)` 는 **FastAPI 가 먼저 파싱한다** — 우리 코드가 돌기
     전이라 `MAX_JSON_BYTES` · `MAX_JSON_DEPTH` 가 전부 건너뛰어졌다. 그런데
@@ -85,6 +86,17 @@ class BoundedBody:
     #: 본문을 볼 메서드. GET·HEAD 는 본문이 없다.
     METHODS = ("POST", "PUT", "PATCH")
 
+    #: **파일을 base64 로 실어 보내는 라우트는 상한이 다르다.** 프런트엔드가
+    #: `FileReader.readAsDataURL` 로 인코딩해 JSON 안에 넣으므로(`content_base64`),
+    #: 본문은 원본의 약 4/3 배다. 여기에 `MAX_JSON_BYTES` 를 걸면 캡처 엔진이
+    #: 512MB 까지 받는데 웹에서는 48MB 쯤에서 413 이 나고 **CLI 와 웹이 갈린다.**
+    #: 그래서 각 경로가 기대는 `safeio` 상한에서 역산한다.
+    LIMITS = {
+        "/api/topology/capture": MAX_CAPTURE_BYTES * 4 // 3 + 8192,
+        "/api/assets/project-file": MAX_XML_BYTES * 4 // 3 + 8192,
+        "/api/assets/import": MAX_CSV_BYTES * 4 // 3 + 8192,
+    }
+
     def __init__(self, app):
         self.app = app
 
@@ -92,6 +104,7 @@ class BoundedBody:
         if scope.get("type") != "http" or scope.get("method") not in self.METHODS:
             return await self.app(scope, receive, send)
 
+        limit = self.LIMITS.get(scope.get("path", ""), MAX_JSON_BYTES)
         chunks, total = [], 0
         while True:
             message = await receive()
@@ -99,19 +112,24 @@ class BoundedBody:
                 return
             chunk = message.get("body", b"")
             total += len(chunk)
-            if total > MAX_JSON_BYTES:
+            if total > limit:
                 # 더 읽지 않는다. 읽어들이는 것 자체가 비용이다.
                 return await self._reject(
-                    send, 413, "본문 크기 %d바이트 초과 (상한 %d)"
-                    % (total, MAX_JSON_BYTES))
+                    send, 413, "본문 크기 %d바이트 초과 (상한 %d)" % (total, limit))
             chunks.append(chunk)
             if not message.get("more_body", False):
                 break
         raw = b"".join(chunks)
 
-        if raw:
+        # 깊이·인코딩 검사는 **본문이 텍스트일 때만** 한다. 지금 라우트는 전부
+        # JSON 이지만, 앞으로 multipart 업로드 라우트가 생기면 바이너리 본문이
+        # UTF-8 디코딩에서 걸려 **없는 문제로 거절**하게 된다. 그래서 '폼·바이너리
+        # 라고 스스로 밝힌 것' 만 건너뛴다 — content-type 이 없거나 모르는 값이면
+        # 검사한다(우리 라우트는 JSON 이므로 그쪽이 안전한 기본값이다).
+        if raw and not self._declares_binary(scope):
             try:
-                check_json_bounds(raw, name=scope.get("path", "<body>"))
+                check_json_bounds(raw, max_bytes=limit,
+                                  name=scope.get("path", "<body>"))
             except UnsafeInput as exc:
                 return await self._reject(send, 400, str(exc))
 
@@ -125,6 +143,18 @@ class BoundedBody:
             return {"type": "http.request", "body": raw, "more_body": False}
 
         return await self.app(scope, replay, send)
+
+    #: 스스로 '텍스트가 아니다' 라고 밝힌 본문. 이것만 텍스트 검사를 건너뛴다.
+    BINARY_TYPES = (b"multipart/", b"application/x-www-form-urlencoded",
+                    b"application/octet-stream")
+
+    @classmethod
+    def _declares_binary(cls, scope) -> bool:
+        for key, value in scope.get("headers") or ():
+            if key == b"content-type":
+                low = value.lower()
+                return any(low.startswith(t) for t in cls.BINARY_TYPES)
+        return False
 
     @staticmethod
     async def _reject(send, status, detail):
