@@ -46,7 +46,7 @@ ASSETS = ROOT / "fixtures" / "assets"
 TOPO = ROOT / "fixtures" / "topology" / "purdue-62443-reference.json"
 CISA = ROOT / "data" / "csaf" / "cisa" / "2026" / "icsa-26-036-02.json"
 CISA_SIEMENS = ROOT / "data" / "csaf" / "cisa" / "2026" / "icsa-26-071-04.json"
-SSA = ROOT / "data" / "csaf" / "siemens" / "ssa-452276.json"
+SSA = ROOT / "data" / "csaf" / "siemens" / "ssa-019113.json"
 OUT = ROOT / "out" / "demo"
 
 _buf = []
@@ -221,7 +221,13 @@ def step5_offline():
 def step6_sources(kev):
     head(6, "소스 권위와 계보, 정책 거버넌스 (슬라이스 5)")
     if not (CISA_SIEMENS.exists() and SSA.exists()):
-        say("  건너뜀 — 연결 쌍 권고문이 없습니다.")
+        # 조용히 건너뛰면 '이 단계는 원래 없는 것' 으로 읽힌다. 무엇이 없고
+        # 무엇을 하면 되는지 말한다 (ADR-038 의 '읽을 수 없으면 그렇다고 말할 것').
+        missing = [str(p.relative_to(ROOT)) for p in (CISA_SIEMENS, SSA)
+                   if not p.exists()]
+        say("  건너뜀 — 연결 쌍 권고문이 없습니다: %s" % ", ".join(missing))
+        say("    `python scripts/fetch_advisories.py` 가 받아옵니다 "
+            "(Siemens TLP:WHITE 는 저장소에 커밋되지 않습니다).")
     else:
         advs = [load_advisory(CISA_SIEMENS), load_advisory(SSA)]
         for a in advs:
@@ -233,8 +239,12 @@ def step6_sources(kev):
         comps = compare_products(g)
         conflicts = sum(1 for c in comps if c.conflicting)
         say()
-        say("  CVE %s 로 연결 · 제품 비교 %d건 · 충돌 %d건"
-            % (", ".join(g.cves), len(comps), conflicts))
+        # 목록을 통째로 쏟지 않는다 (ADR-031). ssa-019113 은 커널 권고문이라
+        # 교집합이 수백 건이고, join 하면 한 줄이 8,000자가 된다.
+        shown = ", ".join(g.cves[:4])
+        more = " 외 %d건" % (len(g.cves) - 4) if len(g.cves) > 4 else ""
+        say("  CVE %d건으로 연결 (%s%s) · 제품 비교 %d건 · 충돌 %d건"
+            % (len(g.cves), shown, more, len(comps), conflicts))
         v = comps[0].views["version_range"]
         say("  현재값 %s ← %s (%s) · 교차 확인 %s"
             % (v.current.value, v.current.source_id, v.current.source_role,

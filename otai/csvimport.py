@@ -20,7 +20,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from .safeio import UnsafeInput, is_formula, sanitize_csv_cell
+from .safeio import (UnsafeInput, bounded_csv_rows, is_formula,
+                     sanitize_csv_cell)
 
 MAX_CSV_BYTES = 32 * 1024 * 1024
 MAX_ROWS = 100_000
@@ -109,19 +110,11 @@ def _set_path(obj: dict, dotted: str, value) -> None:
 
 
 def load_rows(csv_path) -> Tuple[List[str], List[Tuple[int, Dict[str, str]]]]:
-    path = Path(csv_path)
-    size = path.stat().st_size
-    if size > MAX_CSV_BYTES:
-        raise UnsafeInput("CSV 크기 %d > 상한 %d" % (size, MAX_CSV_BYTES), path.name)
-    text = path.read_text(encoding="utf-8-sig")
-    reader = csv.DictReader(io.StringIO(text))
-    headers = reader.fieldnames or []
-    rows = []
-    for i, row in enumerate(reader, start=2):  # 1행은 헤더
-        if i - 1 > MAX_ROWS:
-            raise UnsafeInput("행 수 > 상한 %d" % MAX_ROWS, path.name)
-        rows.append((i, row))
-    return headers, rows
+    """신뢰할 수 없는 바이트는 `safeio` 를 거친다 (ADR-041).
+
+    크기·행 수·디코딩 한계는 전부 거기 있다 — 여기서 다시 세면 두 벌이 어긋난다.
+    """
+    return bounded_csv_rows(csv_path, max_bytes=MAX_CSV_BYTES, max_rows=MAX_ROWS)
 
 
 def build_report(csv_path, mapping_override: Optional[dict] = None,

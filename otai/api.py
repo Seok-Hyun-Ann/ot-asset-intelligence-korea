@@ -31,6 +31,7 @@ from .kev import find_snapshot, load_kev
 from .lifecycle import from_advisory as lifecycle_from_advisory
 from .lifecycle import from_asset as lifecycle_from_asset
 from .lifecycle import resolve as lifecycle_resolve
+from .logic import Tri
 from .paths import blocking_candidates, evaluate_reachability, find_paths
 from .policy import DEFAULT_POLICY, active_policy, preview as policy_preview
 from .priority import BUCKET_ORDER, BUCKET_PHRASES, LENS_PRESETS, evaluate_priority, sort_queue
@@ -451,8 +452,12 @@ def build_app(*, db: str, advisory_paths: List[Path], as_of: str,
                  st, ", ".join(d.cves[:3]))
 
         reach = evaluate_reachability(topo, asset_id, as_of=aov) if topo else None
-        rstate = ("observed" if reach and reach.verdict.value == "true"
-                  else "inferred" if reach and reach.verdict.value == "unknown" else "unknown")
+        # 삼진 값은 `is` 로 비교한다. `.value == "true"` 는 `Tri.__bool__` 가드를
+        # 지나쳐 문자열을 보는 것이고, 타입이 바뀌면 조용히 거짓이 된다 — 그리고
+        # 여기서 거짓은 안전하지 않은 방향이다.
+        rstate = ("observed" if reach and reach.verdict is Tri.TRUE
+                  else "inferred" if reach and reach.verdict is Tri.UNKNOWN
+                  else "unknown")
         branch("paths", "공격 경로", "paths", rstate)
         if reach:
             leaf("paths", "p_verdict", "도달성 %s" % reach.verdict.value, rstate, reach.reason)

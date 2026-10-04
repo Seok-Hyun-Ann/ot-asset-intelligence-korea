@@ -532,7 +532,7 @@ def _cmd_project(args) -> int:
 def _cmd_import(args) -> int:
     mapping = None
     if args.mapping:
-        mapping = json.loads(Path(args.mapping).read_text(encoding="utf-8"))
+        mapping = bounded_json_load(args.mapping)
     existing = []
     if args.out.exists():
         existing = [p.stem for p in args.out.glob("*.json")]

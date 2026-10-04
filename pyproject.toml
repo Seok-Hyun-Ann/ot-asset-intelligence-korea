@@ -19,7 +19,9 @@ dev = ["pytest>=8.0", "hypothesis>=6.100", "playwright>=1.44",
 otai = "otai.cli:main"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+# `testpaths` 를 두지 않는다. 테스트 묶음은 저장소에 배포하지 않으므로(README 참조)
+# `testpaths = ["tests"]` 로 두면 내려받은 사람의 첫 `pytest` 가 "file or directory
+# not found: tests" 로 죽는다 — 없는 것을 고장으로 보이게 만들지 않는다.
 # 전수 검사(-m slow)는 수 분 걸린다. 기본 실행에서는 빼고, 규모를 바꾼 뒤에 돌린다.
 addopts = "-q -m 'not slow'"
 markers = [

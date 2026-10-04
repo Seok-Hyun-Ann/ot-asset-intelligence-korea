@@ -275,6 +275,17 @@ class HardRule:
     escalate_to: Optional[str] = None
     escalate_when: Optional[str] = None   # 이 전제조건이 TRUE 면 escalate_to 로
 
+    def __post_init__(self):
+        # 전제조건이 없는 규칙은 **무조건 발화한다.** `Tri.and_()` 는 항등원이라
+        # 인자 0개에서 TRUE 이고(그게 올바른 Kleene 대수다), 그 TRUE 가 바로
+        # 등급 하한이 된다 — 모든 자산이 그 규칙의 floor 로 올라간다.
+        # 논리 기본형을 비틀지 않고 여기서 막는다. 선언 시점에 터진다.
+        if not self.preconditions:
+            raise ValueError(
+                "강제규칙 %s 에 전제조건이 없습니다 — 무조건 발화하게 됩니다. "
+                "전제조건을 이름 붙여 선언하면 카드가 '무엇이 막고 있는지' 를 "
+                "자동으로 설명합니다 (표 23)." % self.rule_id)
+
 
 HARD_RULES: Tuple[HardRule, ...] = (
     HardRule(

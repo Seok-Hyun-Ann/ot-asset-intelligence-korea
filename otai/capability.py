@@ -80,6 +80,13 @@ def requires_from_cvss(vector: Optional[str]) -> FrozenSet[str]:
 
 
 def describe(caps: FrozenSet[str]) -> str:
+    """능력 집합을 사람 말로. **빈 집합은 '없음' 이 아니라 '미상' 이다** (ADR-031).
+
+    빈 집합이 나오는 길이 둘인데 구별할 수 없다 — CVSS 벡터가 없거나 해석되지
+    않아 아무 능력도 주지 않은 것(= 모른다)과, `Edge.grants` 를 선언하지 않은
+    것(= 모른다)이다. 둘 중 '정말 아무 능력도 주지 않는다' 를 **확인한** 경우는
+    없다. '없음' 으로 쓰면 경로 화면에서 '이 홉은 안전하다' 로 읽힌다.
+    """
     if not caps:
-        return "없음"
+        return "미상"
     return ", ".join(PHRASES[c] for c in sorted(caps, key=lambda c: RANK.get(c, 99)))

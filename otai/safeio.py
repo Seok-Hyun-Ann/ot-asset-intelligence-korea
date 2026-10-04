@@ -213,6 +213,52 @@ def bounded_json_load(path, *, max_bytes=MAX_JSON_BYTES, max_depth=MAX_JSON_DEPT
 
 
 # --------------------------------------------------------------------------
+# CSV
+# --------------------------------------------------------------------------
+MAX_CSV_BYTES = 32 * 1024 * 1024
+MAX_CSV_ROWS = 100_000
+
+
+def bounded_csv_rows(path, *, max_bytes=MAX_CSV_BYTES, max_rows=MAX_CSV_ROWS):
+    """CSV 를 한계 안에서 읽는다. 이 모듈이 `csv.reader` 를 부르는 **유일한** 곳이다.
+
+    이 파일 머리의 규칙("`csv.reader` 를 직접 부르지 말 것")은 여기 읽기가 없으면
+    지킬 수 없는 말이었다 — `csvimport` 가 자기 상한을 들고 직접 불렀다.
+
+    디코딩 실패도 `UnsafeInput` 으로 바꾼다. `UnicodeDecodeError` 로 새면 호출자의
+    `except UnsafeInput` 을 지나쳐 원시 traceback 이 사용자에게 간다 — 읽을 수 없는
+    형식은 그렇다고 **말해야** 한다 (ADR-038).
+
+    돌려주는 것은 `(헤더, [(행 번호, 행 dict)])` 이고 행 번호는 1부터 센 파일
+    기준이다 (1행은 헤더이므로 데이터는 2부터).
+    """
+    import csv
+    import io as _io
+
+    path = Path(path)
+    size = path.stat().st_size
+    if size > max_bytes:
+        raise UnsafeInput("CSV 크기 %d > 상한 %d" % (size, max_bytes), path.name)
+    try:
+        text = path.read_text(encoding="utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise UnsafeInput(
+            "UTF-8 로 읽을 수 없습니다: %s — 엑셀에서 'CSV UTF-8' 로 다시 저장해 "
+            "주세요" % exc, path.name)
+    try:
+        reader = csv.DictReader(_io.StringIO(text))
+        headers = reader.fieldnames or []
+        rows = []
+        for i, row in enumerate(reader, start=2):      # 1행은 헤더
+            if i - 1 > max_rows:
+                raise UnsafeInput("행 수 > 상한 %d" % max_rows, path.name)
+            rows.append((i, row))
+    except csv.Error as exc:
+        raise UnsafeInput("CSV 를 해석할 수 없습니다: %s" % exc, path.name)
+    return headers, rows
+
+
+# --------------------------------------------------------------------------
 # 캡처 (pcap · pcapng)
 # --------------------------------------------------------------------------
 import struct
