@@ -258,8 +258,16 @@ python scripts/inventory.py --db data/otai.db                # 지금 무엇을 
 KISA 는 우리가 쓴 한 줄 요약(본문은 재배포 금지), NIST 는 근거가 된 **짧은 원문 인용**을
 함께 싣습니다(미국 정부 저작물). 자세히는 [ADR-043 · ADR-044](docs/DECISIONS.md).
 
-> **화면·CLI 연결은 아직 없습니다.** 지금은 엔진 모듈(`otai/controls.py`)과 매핑 표뿐이고,
-> 보고서로 뽑는 길이 없습니다 — [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md) 의 남은 할 일입니다.
+```bash
+python -m otai controls \
+  --asset    fixtures/assets/melsec-iqr-fw48.json \
+  --advisory data/csaf/cisa/2026 \
+  --topology fixtures/topology/purdue-62443-reference.json \
+  --as-of    2026-09-11        # --standard kisa|nist · --all · --json
+```
+
+`--topology` 를 주지 않으면 도달성은 **미상으로 남습니다** — '분리됐다' 가 아닙니다.
+웹 화면 연결은 아직 없습니다 ([`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md) 의 (h)).
 
 ## 무엇을 주장하고 무엇을 주장하지 않는가
 

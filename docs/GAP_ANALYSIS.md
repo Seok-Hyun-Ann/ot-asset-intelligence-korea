@@ -196,7 +196,7 @@ Huff 외, [*I Can't Patch My OT Systems!*](https://arxiv.org/abs/2510.06951) (20
 | **e** | **SSVC 설명 축** | `priority.py` 에 병기 (대체 아님) | 작음 |
 | ~~f~~ | ~~통제 항목 매핑~~ → **KISA 제어시스템(ADR-043) + NIST 800-82r3 OT Overlay(ADR-044) 완료.** 62443-3-3 · CSF · NERC CIP 는 남음. **화면 연결은 (h)** | `data/controls/` · `otai/controls.py` | — |
 | **g** | **D3FEND 어휘**를 차단 후보에 | `paths.py` · `terms.ts` | 중간 |
-| **h** | **점검 항목 근거를 화면·CLI·보고서로** — 지금은 `otai/controls.py` 와 매핑 표뿐이고 사용자가 볼 길이 없다 | `cli.py` · `api.py` · 표 25 새 화면 | 작음 |
+| **h** | ~~점검 항목 근거를 CLI 로~~ → **`otai controls` 완료.** 남은 것은 **웹 화면·보고서 내보내기** | `api.py` · 표 25 새 화면 | 작음 |
 
 **(a) 를 먼저 하는 이유**: 측정된 격차이고, 데이터가 이미 수집되고 있으며, CISA 기준의
 세 항목을 한 번에 채우고, `capture.py` 가 만든 토폴로지와 자산 목록이 **같은 장비를

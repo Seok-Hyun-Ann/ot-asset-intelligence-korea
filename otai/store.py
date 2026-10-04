@@ -141,6 +141,9 @@ ACTIONS = (
     "project_file_scanned", "project_file_applied",
     # 캡처 (ADR-039). 어떤 파일이 언제 들어왔는지가 토폴로지 계보의 시작점이다.
     "capture_scanned", "capture_applied",
+    # 점검 항목 근거 (ADR-043/044). 읽기만 하지만 기록한다 — 누가 어느 시점의
+    # 근거를 들고 나갔는지가 평가 자료의 출처가 된다.
+    "controls_evidence_listed",
 )
 
 

@@ -204,6 +204,27 @@ _RIDERS = {
 }
 
 
+def _require(items, name, label, attrs) -> tuple:
+    """넘어온 것이 정말 그것인지 확인한다 — 아니면 **크게 실패한다**.
+
+    `getattr(x, "kind", "")` 로 조용히 넘기면 **잘못된 입력이 근거가 된다.**
+    실측: `exposure.find()` 는 `(발견, 질문)` **튜플**을 돌려주는데 풀지 않고
+    그대로 넘기면 노출 1건이 '2건' 이 되고, 문자열 3개를 넘기면 '3건' 이 된다.
+    예외도 나지 않는다. 세는 대상을 틀리면 없는 사실을 만드는 것이다 (ADR-035).
+
+    삼진 논리는 **현장에 대한 사실**이 미상일 때 쓰는 것이고, 타입이 틀린 것은
+    호출자의 버그다. 둘을 섞지 않는다.
+    """
+    seq = tuple(items)
+    for i, it in enumerate(seq):
+        if not any(hasattr(it, a) for a in attrs):
+            raise TypeError(
+                "%s[%d] 이 %s이 아니다 — %s 를 받았는데 %s 중 하나는 있어야 한다. "
+                "`exposure.find()` 는 (발견, 질문) 튜플을 돌려준다 — 풀어서 넘길 것."
+                % (name, i, label, type(it).__name__, " · ".join(attrs)))
+    return seq
+
+
 def _gather(asset, findings, exposures, reachability, capture_endpoints,
             words) -> Dict[str, List[Tuple[Optional[str], Optional[str]]]]:
     """근거를 **종류별로** 모은다.
@@ -319,7 +340,16 @@ def evidence_for(control: Control, asset, findings=(), exposures=(),
     `findings` 는 적용성 판정 목록, `exposures` 는 표 4 의 노출 발견,
     `reachability` 는 도달성 판정, `capture_endpoints` 는 캡처에서 본 끝점이다.
     없으면 없는 대로 — **없는 것을 '문제 없음' 으로 접지 않는다.**
+
+    넘어온 것이 그 모양인지 먼저 확인한다. 범위 밖 항목이어도 확인한다 — 호출자의
+    실수를 항목에 따라 봐주면 어느 항목에서 터질지가 표에 달린다.
     """
+    findings = _require(findings, "findings", "적용성 판정", ("status",))
+    exposures = _require(exposures, "exposures", "노출 발견", ("kind", "code"))
+    if reachability is not None and not hasattr(reachability, "verdict"):
+        raise TypeError("reachability 에 verdict 가 없다 — %s 를 받았다."
+                        % type(reachability).__name__)
+
     if not control.assessable:
         return Evidence(control, NOT_ASSESSABLE,
                         ("정책·절차·물리·교육 항목이라 도구가 답할 수 없습니다.",), ())

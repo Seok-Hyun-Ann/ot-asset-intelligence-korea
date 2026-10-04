@@ -249,6 +249,88 @@ def _cmd_bundle_rollback(args) -> int:
     return 0 if res.ok else 1
 
 
+def _cmd_controls(args) -> int:
+    """점검 항목에 **근거를 댄다** — 준수 여부를 판정하지 않는다 (ADR-043/044).
+
+    규칙을 다시 쓰지 않는다. `queue` 와 **같은 파이프라인**으로 판정·노출·도달성을
+    만들고 그것을 근거로 넘긴다 — 여기서 따로 계산하면 두 화면이 다른 수를 말한다.
+    """
+    from .controls import evidence_for, load_all
+    from .controls_view import render_controls
+    from .exposure import find as find_exposure
+
+    sets = load_all(args.standards)
+    if not sets:
+        sys.stderr.write("점검 항목 표가 없습니다: %s\n" % args.standards)
+        return 2
+    if args.standard:
+        want = args.standard.lower()
+        sets = [cs for cs in sets if want in cs.standard_id.lower()]
+        if not sets:
+            sys.stderr.write("그런 표준이 없습니다: %s\n" % args.standard)
+            return 2
+
+    asset = load_asset(args.asset)
+    topo = load_topology(args.topology) if args.topology else None
+
+    # 적용성 판정 — queue 와 같은 사전 필터를 거친다 (ADR-030)
+    from .identity import could_match, index_advisory
+    findings = []
+    for pattern in (args.advisory or ()):
+        p = Path(pattern)
+        for ap in (sorted(p.glob("*.json")) if p.is_dir() else [p]):
+            adv = load_advisory(ap)
+            if not could_match(asset, index_advisory(adv)):
+                continue              # 건너뛴 쌍은 no_known_match 로 확정이다
+            d = decide_applicability(asset, adv, as_of=args.as_of)
+            findings.append(evaluate_priority(d, asset, topology=topo,
+                                              lens="default"))
+
+    # 노출은 (발견, 질문) 튜플을 돌려준다 — 풀어서 넘긴다
+    h02 = any("H02" in (f.fired_rules or ()) for f in findings)
+    exposures, _questions = find_exposure(asset, topology=topo, as_of=args.as_of,
+                                          h02_fired=h02)
+    reach = (evaluate_reachability(topo, asset.asset_id, as_of=args.as_of)
+             if topo else None)
+
+    endpoints = ()
+    if args.capture:
+        from .capture import scan_capture
+        endpoints = tuple(sorted(scan_capture(args.capture).endpoints))
+
+    reports = [(cs, [evidence_for(c, asset, findings=findings,
+                                  exposures=exposures, reachability=reach,
+                                  capture_endpoints=endpoints)
+                     for c in cs.controls])
+               for cs in sets]
+
+    # '대조한 수' 와 '해당한 수' 는 다르다. 전자만 쓰면 큰 수가 근거처럼 읽힌다.
+    seen = ["권고문 %d건 대조" % len(findings),
+            "토폴로지 %s" % ("있음" if topo else "없음 — 도달성은 미상으로 남는다"),
+            "캡처 %s" % ("끝점 %d개" % len(endpoints) if endpoints else "없음"),
+            "노출 %d건" % len(exposures)]
+
+    if args.json:
+        out = json.dumps(
+            [{"standard": cs.standard_id,
+              "controls": [{"code": e.control.code, "status": e.status,
+                            "status_ko": e.status_ko,
+                            "our_scope": e.control.our_scope,
+                            "basis": list(e.basis),
+                            "pointers": list(e.pointers)} for e in evs]}
+             for cs, evs in reports],
+            ensure_ascii=False, sort_keys=True, indent=2)
+    else:
+        out = render_controls(reports, asset.asset_id, args.as_of,
+                              show_all=args.all, inputs=seen)
+    sys.stdout.write(out + "\n")
+    _audit(args, "controls_evidence_listed", subject=asset.asset_id,
+           detail={"standards": [cs.standard_id for cs, _ in reports],
+                   "advisories_compared": len(findings),
+                   "topology": bool(topo), "capture_endpoints": len(endpoints)})
+    return 0
+
+
 def _cmd_capture(args) -> int:
     """캡처 파일에서 토폴로지를 만든다. **장비에 붙지 않는다** (불변 규칙 6).
 
@@ -785,6 +867,25 @@ def build_parser() -> argparse.ArgumentParser:
     br.add_argument("--to", required=True)
     br.add_argument("--as-of", required=True, dest="as_of")
     br.set_defaults(func=_cmd_bundle_rollback)
+
+    ct = _audited(sub.add_parser(
+        "controls", help="점검 항목에 근거를 댄다 (준수 판정 아님)"))
+    ct.add_argument("--asset", required=True, type=Path, help="자산 JSON 1건")
+    ct.add_argument("--advisory", nargs="+", type=Path, default=None,
+                    help="CSAF 2.0 권고 JSON (파일 또는 디렉터리)")
+    ct.add_argument("--topology", type=Path, default=None,
+                    help="없으면 도달성은 미상으로 남는다 — '분리됐다' 가 아니다")
+    ct.add_argument("--capture", type=Path, default=None,
+                    help="pcap·pcapng — 그 시간 창에 통신한 끝점을 근거로 쓴다")
+    ct.add_argument("--standards", type=Path, default=Path("data/controls"),
+                    help="점검 항목 표 디렉터리 (기본: data/controls)")
+    ct.add_argument("--standard", default=None,
+                    help="표준 하나만 (예: kisa, nist). 기본은 실린 전부")
+    ct.add_argument("--all", action="store_true",
+                    help="도구가 답할 수 없는 항목까지 전부 표시")
+    ct.add_argument("--json", action="store_true")
+    ct.add_argument("--as-of", required=True, dest="as_of")
+    ct.set_defaults(func=_cmd_controls)
 
     cap = _audited(sub.add_parser(
         "capture", help="캡처(pcap·pcapng)에서 토폴로지 만들기 (기본 dry-run)"))
