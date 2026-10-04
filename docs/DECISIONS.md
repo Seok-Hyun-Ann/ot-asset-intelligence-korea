@@ -1019,6 +1019,131 @@ T0855 가 사라져 매핑이 조용히 비었던 적이 있고, `verify_mapping
 
 ---
 
+## ADR-045 · 공개 후 감사 — 골드셋이 닿지 않는 입력 모양
+
+ADR-041 이 공개 **전** 점검이었다. 이것은 공개 **후** 감사다. 찾은 것 중 셋은
+불변 규칙 1(false safe 0건)을 **실제로 어기고 있었다.**
+
+### 왜 테스트가 전부 녹색이었나 — 입력 모양이 하나였다
+
+셋 다 도달성 판정에 있었고, 셋 다 `fixtures/topology/purdue-62443-reference.json`
+으로는 밟히지 않는다. 그 픽스처는 **진입점이 선언돼 있고 Purdue 레벨이 전부
+채워져 있다.** 그런데 `capture.py` 가 만드는 토폴로지는 반대다:
+
+| | 골드셋 픽스처 | 캡처에서 만든 것 |
+|---|---|---|
+| `is_entry_point` | `internet` · `vendor-remote` | **없다** (패킷에 그런 개념이 없다) |
+| `purdue_level` | 전부 채워짐 | **전부 `None`** (`capture.py` 가 그렇게 쓴다) |
+| `Edge.grants` | 선언됨 | 선택 필드 — 비어 있을 수 있다 |
+
+ADR-039 는 이 빈칸을 "사람이 채워야 합니다" 로 문서화했다. **그 중간 상태가
+정상 경로다.** 그런데 그 상태를 지나는 테스트가 없었다.
+
+### 1. 진입점을 모르는 것이 '닿지 않는다' 가 됐다
+
+`evaluate_reachability` 는 `topo is None` 과 `node is None` 만 막았다. 토폴로지에
+**진입점이 0개**인 경우는 `find_paths` 가 빈 결과를 주고, 그대로 마지막 줄
+`Tri.FALSE`("진입점에서 도달하는 경로가 없습니다")로 떨어졌다.
+
+하류가 조용히 틀어진다:
+
+| | `Tri.FALSE` (전) | `Tri.UNKNOWN` (후) |
+|---|---|---|
+| 노출 버킷 | **`P3`** — 도달성이 낮다고 *판단한* 것 | **`P?`** — 판단 자체가 불가능한 것 |
+| H02 | FALSE → `P?` 큐에도 안 들어온다 | UNKNOWN → `floor_if_confirmed` 와 함께 보류 |
+
+`P?` 를 만든 이유(ADR-007)가 정확히 이 구분인데, 그 구분이 입구에서 무너져 있었다.
+
+### 2. 능력 근거가 없는 것이 '경로가 없다' 가 됐다
+
+`require_capability` 필터가 **비어 있지 않던** 목록을 비우면 같은 마지막 줄로
+떨어져 *"진입점에서 도달하는 경로가 없습니다"* 라고 말했다. **경로는 있다.**
+없는 것은 그 경로가 요구 능력을 준다는 근거다. `Edge.grants` 가 선택 필드이므로
+손으로 만든 토폴로지도 캡처에서 나온 토폴로지도 다 걸린다.
+
+이건 false safe 이면서 동시에 **사실이 아닌 문장**이었다. 화면에 "경로 없음" 이
+떠 있는데 경로가 있다.
+
+### 3. `purdue_level` 이 `None` 이면 H03 이 터졌다
+
+`priority.py` 의 `topo.nodes[p.entry].purdue_level >= 4.0` 가
+`TypeError: '>=' not supported between 'NoneType' and 'float'` 로 죽는다.
+H03 평가가 죽으면 `otai queue` 와 `/api/actions` 가 같이 죽는다.
+
+`topology.py` 는 **같은 비교를 이미 막고 있었다**(`if lvl is not None and lvl <= 0.0`,
+주석까지 달려 있다). 규율이 한 모듈에서 다음 모듈로 넘어가지 않았다.
+
+그리고 레벨을 모르는 진입점은 외부도 내부도 아니다 — 고친 뒤에도 '모두 내부'
+(`Tri.FALSE`)라고 하면 **모르는 것을 근거로 H03 을 끄는 것**이다. `UNKNOWN` 이다.
+
+### 막는 방법 — 입력 모양을 테스트가 들고 있게
+
+`tests/test_false_safe_guards.py` 에 다섯 개를 더했다. 마지막 하나가 중요하다:
+
+```python
+def test_capture_topology_shape_is_the_one_that_trips_these():
+    assert gold.entry_points, "골드셋은 진입점이 있다 — 그래서 #1 을 안 밟았다"
+    assert all(n.purdue_level is not None for n in gold.nodes.values())
+```
+
+**왜 안 걸렸는지를 테스트가 말한다.** 골드셋의 모양이 바뀌면 이 테스트가 먼저
+깨지고, 그때 나머지 넷이 무엇을 지키고 있었는지 다시 읽게 된다.
+
+반대 방향도 고정했다 — 엣지가 진짜 없으면 여전히 `Tri.FALSE` 다. 전부 UNKNOWN 으로
+뭉개면 판정이 사라진다.
+
+### HTTP 본문은 우리가 보기 전에 파싱된다
+
+`body: dict = Body(...)` 는 Starlette 가 파싱한 뒤 핸들러에 들어온다. 우리 코드가
+돌기 전이라 `MAX_JSON_BYTES` · `MAX_JSON_DEPTH` 가 **전부 건너뛰어졌다.** POST
+라우트 5개가 그랬고 그중 `/api/assets` 는 append-only 저장소에 바로 쓴다 —
+인증도 CSRF 토큰도 없다. `otai/server.py` 의 단순한 입력 서버는 이미 본문을 묶고
+있었는데(`if n > 1 << 20`) FastAPI 계층만 물려받지 못했다.
+
+**핸들러를 `async` 로 바꾸지 않았다.** 바꾸면 동기 DB 쓰기가 스레드풀이 아니라
+이벤트 루프에서 돌아 스윕 스레드와 함께 서버를 멈춘다. 대신 ASGI 미들웨어
+(`BoundedBody`)가 본문을 모아 검사하고 **그대로 다시 흘려보낸다** — 지금 라우트와
+앞으로 추가될 라우트가 모두 덮이고 핸들러는 동기로 남는다.
+
+`safeio.check_json_bounds` 를 더했다 — 크기·깊이만 보고 **파싱하지 않는다.**
+`bounded_json_loads` 를 쓰면 FastAPI 가 파싱할 본문을 두 번 파싱한다.
+
+### 감사의 권고를 하나 따르지 않았다
+
+`Tri.and_()` 가 인자 0개에서 `TRUE` 인 것을 `UNKNOWN` 으로 바꾸라는 권고가 있었다.
+**따르지 않았다.** `tests/test_versions.py` 가 항등원을 명시적으로 고정하고 있고
+(`assert Tri.and_() is Tri.TRUE`), 그게 올바른 Kleene 대수다. 논리 기본형을
+비틀면 다른 곳에서 설명할 수 없는 동작이 생긴다.
+
+위험은 기본형이 아니라 **호출처**였다 — 전제조건이 빈 `HardRule` 이 무조건
+발화하는 것. `HardRule.__post_init__` 이 선언 시점에 막는다. 규칙 5개는 전부
+전제조건을 갖고 있어 지금은 도달하지 않지만, 새 규칙을 쓸 때 터진다.
+
+### 그 밖에
+
+| 찾은 것 | 왜 문제인가 |
+|---|---|
+| `docs/VERIFICATION.md` 가 326건 (실제 521) | `verify_matrix.py` 의 파일 목록이 **하드코딩**이라 ADR-037 이후 6개 파일 190건이 빠졌다. README 가 세 번 '검증의 근거' 로 가리키는 문서가 자기 범위를 36% 적게 말했다 |
+| `demo.py` 가 `ssa-452276.json` 을 찾는다 | `fetch_advisories.py` 는 `ssa-019113.json` 을 받는다 → 6단계가 **영구히 건너뛰어졌다.** 고치자마자 ADR-031 위반이 드러났다(CVE 431건을 한 줄에 쏟았다) |
+| `pyproject` 의 `testpaths = ["tests"]` | `tests/` 를 배포하지 않으므로 내려받은 사람의 첫 `pytest` 가 죽는다 — 없는 것을 고장으로 보이게 만들었다 |
+| `cli.py --mapping` · `csvimport` · `bundle` 매니페스트 · `fetch_advisories` KEV · `inventory` | safeio 우회 5곳. `safeio` 머리의 "`csv.reader` 를 직접 부르지 말 것" 은 **읽기가 없어서 지킬 수 없는 말**이었다 → `bounded_csv_rows` 를 만들고 상한을 한 곳으로 모았다 |
+| `capability.describe(frozenset())` → `"없음"` | 빈 집합이 나오는 길은 'CVSS 벡터 없음'·'`grants` 미선언' 둘뿐이고 **정말 능력이 없음을 확인한 경우는 없다.** 경로 화면에서 '이 홉은 안전' 으로 읽힌다 → `"미상"` (ADR-031) |
+| `api.py` 의 `verdict.value == "true"` | `Tri.__bool__` 가드를 지나쳐 문자열을 본다. 타입이 바뀌면 조용히 거짓이 되고, 여기서 거짓은 안전하지 않은 방향이다 |
+| 같은 수를 두 곳에서 다르게 (제품명 4,595/4,581 · 성능 0.62/0.63 · 테스트 34/45) | 세어서 맞췄다. 제품명은 실측 **4,581**. 성능은 README 가 수를 다시 적지 않고 측정표를 가리키게 했다 — 한 수에 출처 하나 |
+
+`otai/repo.py` 의 `json.loads` **셋은 그대로 둔다.** 우리 DB 안의 값이고 들어올
+때 이미 한계를 거쳤으며, 목록 화면이 모든 행을 파싱하는 핫 경로다. 이유를
+주석으로 적었다 — 외부 바이트가 그 경로로 들어오게 만들지 말아야 한다.
+
+### 남은 것
+
+- **웹 화면에서 점검 항목 근거를 볼 수 없다** (`GAP_ANALYSIS.md` (h)). CLI 는 붙었다.
+- `otai ask` 서버와 FastAPI 가 본문 한계를 **각자** 들고 있다. 합칠 수 있다.
+- `cli.py` 와 `api.py` 가 도달성 판정을 `verdict.value` 로 **표시**한다 —
+  비교는 고쳤지만 사용자에게 `true`/`unknown` 이 영문으로 보인다. 한국어 매핑이 없다.
+
+---
+
 ## ADR-044 · 표준을 둘 싣는다 — 근거는 하나로 모은다
 
 ADR-043 에서 NIST 쪽은 **Rev.3 영문 원문이 필요하다**고 적고 미뤘다. 받아서 했다.

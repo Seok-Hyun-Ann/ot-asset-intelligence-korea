@@ -25,6 +25,7 @@ from otai.attack import find_bundle, load_attack           # noqa: E402
 from otai.csaf import load_advisory                        # noqa: E402
 from otai.kev import find_snapshot, load_kev               # noqa: E402
 from otai.repo import Repo, completeness                   # noqa: E402
+from otai.safeio import bounded_json_load                  # noqa: E402
 from otai.topology import load_topology                    # noqa: E402
 
 ap = argparse.ArgumentParser()
@@ -59,7 +60,7 @@ for p in paths:
         if s is not None:
             scored.append(s)
     # CWE 는 파서가 뽑지 않는다. 원문에 있는지는 여기서 직접 확인한다.
-    raw = json.loads(p.read_text(encoding="utf-8"))
+    raw = bounded_json_load(p)
     for v in raw.get("vulnerabilities") or []:
         w = v.get("cwe")
         if isinstance(w, dict) and w.get("id"):

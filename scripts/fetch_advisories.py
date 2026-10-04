@@ -24,6 +24,9 @@ if hasattr(sys.stdout, "buffer"):
     sys.stdout = _io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", newline="\n")
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from otai.safeio import bounded_json_loads          # noqa: E402
 
 SOURCES = [
     (
@@ -70,7 +73,8 @@ def fetch_kev() -> bool:
         print("  실패 KEV")
         print("    %s" % exc)
         return False
-    doc = json.loads(body.decode("utf-8"))
+    # 인터넷에서 바로 온 바이트다 — 파일로 쓰기 전에 한계를 본다 (ADR-041).
+    doc = bounded_json_loads(body, name="KEV")
     ver = doc.get("catalogVersion", "unknown")
     dest = ROOT / "data" / "kev" / ver / "known_exploited_vulnerabilities.json"
     dest.parent.mkdir(parents=True, exist_ok=True)

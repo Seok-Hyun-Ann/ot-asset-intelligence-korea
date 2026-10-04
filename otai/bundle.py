@@ -26,7 +26,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from .safeio import UnsafeInput, bounded_json_load, inspect_zip, safe_extract
+from .safeio import (UnsafeInput, bounded_json_load, bounded_json_loads,
+                     inspect_zip, safe_extract)
 
 BUNDLE_VERSION = "1"
 SIG_ALG = "ed25519"
@@ -180,7 +181,10 @@ def verify_bundle(zip_path, pub_path) -> VerifyResult:
             return VerifyResult(False, None, None, "서명 검증 실패")
 
         try:
-            manifest = json.loads(canonical.decode("utf-8"))
+            # 서명이 통과했어도 **한계는 본다.** 서명은 보낸 이를 증명할 뿐
+            # 잘 만들어졌음을 증명하지 않는다 (ADR-041). 서명 키를 쥔 쪽이
+            # 실수로든 고의로든 64MB·깊이 100의 매니페스트를 보낼 수 있다.
+            manifest = bounded_json_loads(canonical, name=SIG_NAME)
         except Exception as exc:
             return VerifyResult(False, None, None, "매니페스트 파싱 실패: %s" % exc)
 

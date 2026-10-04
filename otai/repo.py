@@ -122,6 +122,9 @@ class Repo:
     # ---- 읽기 -------------------------------------------------------------
     def body(self, asset_id: str) -> Optional[dict]:
         r = self.conn.one("SELECT body_json FROM asset_row WHERE asset_id=?", (asset_id,))
+        # 우리 DB 안의 값이다. 들어올 때 이미 `bounded_json_load` 를 거쳤고,
+        # 목록 화면은 모든 행을 파싱하는 핫 경로라 여기서 다시 묶지 않는다.
+        # 외부 바이트가 이 경로로 들어오게 만들지 말 것 (ADR-041).
         return json.loads(r["body_json"]) if r else None
 
     def asset(self, asset_id: str) -> Optional[Asset]:
