@@ -208,6 +208,12 @@ def evaluate_reachability(
       경로는 있으나 inferred/unknown 섞임          → UNKNOWN (막는 엣지 지목)
       그래프에 자산이 있고 어떤 경로도 없음          → FALSE
       그래프에 자산이 아예 없음                     → UNKNOWN  ← false safe 방지
+      **진입점이 선언되지 않음**                    → UNKNOWN  ← false safe 방지
+      **경로는 있으나 요구 능력의 근거가 없음**       → UNKNOWN  ← false safe 방지
+
+    뒤의 두 줄이 ADR-044 에서 더해졌다. 셋째 줄(FALSE)이 그 둘을 함께 삼키고 있었다 —
+    캡처에서 만든 토폴로지는 **진입점이 0개**이고(`capture.py` 는 그 값을 모른다),
+    `grants` 는 선택 필드다. 둘 다 '모른다' 인데 '닿지 않는다' 로 접혔다.
     """
     if topo is None:
         return Reachability(Tri.UNKNOWN, (), (), (), "토폴로지가 로드되지 않음")
@@ -219,7 +225,16 @@ def evaluate_reachability(
             "이 자산이 토폴로지에 없습니다 — 도달 불가로 단정하지 않습니다",
         )
 
+    # 진입점을 모르면 '닿지 않는다' 가 아니라 '모른다' 다. 캡처에서 만든 토폴로지는
+    # 진입점이 0개이고(패킷에 없다), 사람이 채우기 전까지 이 상태로 있다 (ADR-039).
+    if not topo.entry_points:
+        return Reachability(
+            Tri.UNKNOWN, (), (), (),
+            "토폴로지에 진입점이 선언되지 않았습니다 — 도달 불가로 단정하지 않습니다",
+        )
+
     paths = find_paths(topo, node.node_id, as_of=as_of)
+    unfiltered = len(paths)
     if require_capability:
         paths = tuple(
             p for p in paths
@@ -244,6 +259,15 @@ def evaluate_reachability(
             Tri.UNKNOWN, (), others, tuple(blocking),
             "경로 %d개가 있으나 모두 추론·미상 엣지를 포함합니다 (추론은 확정으로 승격하지 않습니다)"
             % len(others),
+        )
+    # 능력 필터가 비어 있지 않던 목록을 비웠다면, 경로는 **있다**. 없는 것은
+    # 그 경로가 요구 능력을 준다는 근거다. 둘을 같은 문장으로 말하면 거짓이 된다.
+    if require_capability and unfiltered:
+        return Reachability(
+            Tri.UNKNOWN, (), (), (),
+            "경로 %d개가 있으나 %s 능력을 얻는다는 근거가 없습니다 — 능력은 CVSS "
+            "벡터에서만 도출하고, 없는 능력을 지어내지 않습니다 (R06)"
+            % (unfiltered, require_capability),
         )
     return Reachability(
         Tri.FALSE, (), (), (),

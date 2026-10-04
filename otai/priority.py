@@ -152,12 +152,21 @@ def _external_zone(ctx: Context) -> Precondition:
     if r.verdict is not Tri.TRUE:
         return Precondition("외부 상위 Zone 도달", r.verdict, r.reason)
     topo = ctx.topology
-    external = [p for p in r.confirmed_paths
-                if topo.nodes[p.entry].purdue_level >= 4.0]
+    # `purdue_level` 은 Optional 이고 `None` 이 미상이다 (ADR-039). 캡처에서 만든
+    # 노드는 전부 None 이므로, 비교 전에 걸러야 한다 — 안 하면 TypeError 로 터진다.
+    levels = [(p, topo.nodes[p.entry].purdue_level) for p in r.confirmed_paths]
+    external = [p for p, lvl in levels if lvl is not None and lvl >= 4.0]
     if external:
         return Precondition("외부 상위 Zone 도달", Tri.TRUE,
                             "외부 진입점 %s 에서 확인 경로 존재"
                             % ", ".join(sorted({p.entry for p in external})))
+    # 레벨을 모르는 진입점은 외부도 내부도 아니다. '모두 내부' 라고 하면
+    # 모르는 것을 근거로 H03 을 끄는 것이다.
+    unknown = sorted({p.entry for p, lvl in levels if lvl is None})
+    if unknown:
+        return Precondition("외부 상위 Zone 도달", Tri.UNKNOWN,
+                            "진입점 %s 의 Purdue 레벨이 미상입니다 — 내부라고 "
+                            "단정하지 않습니다" % ", ".join(unknown))
     return Precondition("외부 상위 Zone 도달", Tri.FALSE,
                         "확인 경로의 진입점이 모두 내부입니다")
 
