@@ -57,3 +57,7 @@ scripts/verify_matrix.py
 # 점검 내용·판단 기준 본문은 저작물이므로 담지 않는다.
 data/standards/
 *.pdf
+
+# 회사별 자산대장 매핑 프로파일 (ADR-046). 사용자 데이터이고 사내
+# 설비대장의 열 이름이 그대로 들어가므로 커밋하지 않는다.
+data/import-profiles/

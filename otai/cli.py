@@ -536,35 +536,190 @@ def _cmd_project(args) -> int:
 
 
 def _cmd_import(args) -> int:
+    """CSV 또는 엑셀 자산대장을 읽는다. 기본은 dry-run 이다.
+
+    엑셀은 **머리글 행을 짐작하지 않는다** — 후보를 보여주고, 사람이 고른 것을
+    프로파일에 남겨 다음 달에 다시 묻지 않는다 (ADR-046).
+    """
+    from .csvimport import (ImportProfile, build_report_from_rows, load_profile,
+                           save_profile)
+
+    if not args.csv and not args.xlsx:
+        sys.stderr.write("--csv 또는 --xlsx 중 하나는 주셔야 합니다.\n")
+        return 2
+
+    profile = None
     mapping = None
+    if args.profile:
+        try:
+            profile = load_profile(args.profile)
+            mapping = dict(profile.mapping)
+            sys.stdout.write("프로파일 '%s' 를 씁니다%s\n"
+                             % (profile.name,
+                                " — %s" % profile.note if profile.note else ""))
+        except (UnsafeInput, FileNotFoundError, OSError) as exc:
+            sys.stderr.write("프로파일을 읽지 못했습니다: %s\n" % exc)
+            return 2
     if args.mapping:
-        mapping = bounded_json_load(args.mapping)
+        # 명시한 매핑 파일이 프로파일보다 세다 — 사람이 지금 준 것이다
+        mapping = dict(mapping or {})
+        mapping.update(bounded_json_load(args.mapping))
+
     existing = []
     if args.out.exists():
-        existing = [p.stem for p in args.out.glob("*.json")]
+        existing = [q.stem for q in args.out.glob("*.json")]
+
+    source = args.xlsx or args.csv
+    reports = []
     try:
-        rep = build_report(args.csv, mapping, existing_ids=existing)
+        if args.xlsx:
+            from .xlsxread import rows_of, scan
+            sheets = scan(args.xlsx)
+            chosen = _choose_sheets(sheets, args, profile)
+            if chosen is None:
+                return 0 if not args.apply else 2
+            for name, header_row in chosen:
+                hdr, rows = rows_of(args.xlsx, name, header_row)
+                rep = build_report_from_rows(
+                    hdr, rows, "%s-%s" % (Path(args.xlsx).stem, name),
+                    mapping_override=mapping, existing_ids=existing)
+                existing.extend(r.asset_id for r in rep.results
+                                if r.action == "create" and r.asset_id)
+                reports.append((name, header_row, rep))
+        else:
+            reports.append((None, None, build_report(args.csv, mapping,
+                                                     existing_ids=existing)))
     except UnsafeInput as exc:
         sys.stdout.write("거부: %s\n" % exc)
-        _audit(args, "import_dry_run", subject=str(args.csv),
+        _audit(args, "import_dry_run", subject=str(source),
                detail={"rejected": str(exc)})
         return 1
 
-    sys.stdout.write("CSV Import — %s\n" % args.csv)
-    sys.stdout.write("매핑: %s\n" % json.dumps(rep.mapping, ensure_ascii=False))
-    for r in rep.results:
-        if r.action != "create":
-            sys.stdout.write("  %d행 %s: %s\n" % (r.line, r.action, r.message))
+    total_written = 0
+    for name, header_row, rep in reports:
+        head = "자산대장 Import — %s" % source
+        if name:
+            head += "  [시트 %s · 머리글 %d행]" % (name, header_row)
+        sys.stdout.write("\n" + head + "\n")
+        sys.stdout.write("매핑: %s\n" % json.dumps(rep.mapping, ensure_ascii=False))
+        for r in rep.results:
+            if r.action != "create":
+                sys.stdout.write("  %d행 %s: %s\n" % (r.line, r.action, r.message))
+        if args.apply:
+            written = apply_report(rep, args.out)
+            total_written += len(written)
+            sys.stdout.write("자산 파일 %d개 작성\n" % len(written))
+        sys.stdout.write(rep.summary() + "\n")
+        _vendor_coverage_notice(rep)
+
     if args.apply:
-        written = apply_report(rep, args.out)
-        _audit(args, "import_applied", subject=str(args.csv),
-               detail={"created": len(written)})
-        sys.stdout.write("자산 파일 %d개 작성\n" % len(written))
+        _audit(args, "import_applied", subject=str(source),
+               detail={"created": total_written,
+                       "sheets": [n for n, _h, _r in reports if n]})
     else:
-        _audit(args, "import_dry_run", subject=str(args.csv),
-               detail={"rows": rep.rows, "created": rep.created})
-    sys.stdout.write(rep.summary() + "\n")
+        _audit(args, "import_dry_run", subject=str(source),
+               detail={"rows": sum(r.rows for _n, _h, r in reports),
+                       "created": sum(r.created for _n, _h, r in reports)})
+
+    if args.save_profile:
+        prof = ImportProfile(
+            name=args.save_profile,
+            mapping={h: f for _n, _h, rep in reports for h, f in rep.mapping.items()},
+            sheets={n: h for n, h, _r in reports if n},
+            note=profile.note if profile else None)
+        where = save_profile(prof)
+        sys.stdout.write("\n매핑을 %s 에 저장했습니다 — 다음 달에는 "
+                         "`--profile %s` 만 주시면 됩니다.\n"
+                         % (where, args.save_profile))
     return 0
+
+
+def _choose_sheets(sheets, args, profile):
+    """어느 시트를 어느 머리글 행으로 읽을지 정한다. **짐작하지 않는다.**
+
+    순서: ① 프로파일에 적혀 있으면 그대로 ② `--sheet 이름:행` 으로 주면 그대로
+    ③ 아무것도 없으면 **후보만 보여주고 멈춘다.** 자동으로 고르면, 병합된 제목
+    행이나 데이터 행을 머리글로 삼은 채 800대가 들어온다.
+    """
+    pinned = {}
+    if profile and profile.sheets:
+        pinned.update(profile.sheets)
+    for spec in (args.sheet or ()):
+        if ":" not in spec:
+            sys.stderr.write("--sheet 는 '시트이름:머리글행' 형식입니다: %s\n" % spec)
+            return None
+        name, _, row = spec.rpartition(":")
+        try:
+            pinned[name] = int(row)
+        except ValueError:
+            sys.stderr.write("머리글 행이 숫자가 아닙니다: %s\n" % spec)
+            return None
+
+    found = {s.name: s for s in sheets}
+    if pinned:
+        bad = [n for n in pinned if n not in found]
+        if bad:
+            sys.stderr.write("그런 시트가 없습니다: %s (있는 것: %s)\n"
+                             % (", ".join(bad), ", ".join(found)))
+            return None
+        return [(n, pinned[n]) for n in pinned]
+
+    sys.stdout.write("시트 %d개를 봤습니다. **머리글 행을 짐작하지 않습니다** — "
+                     "후보를 보여드립니다.\n\n" % len(sheets))
+    for s in sheets:
+        if not s.candidates:
+            sys.stdout.write("  [%s] 아는 머리글이 없습니다 — 열 이름을 확인해 "
+                             "주세요\n" % s.name)
+            continue
+        for c in s.candidates[:3]:
+            sys.stdout.write("  [%s] %2d행  %-3s  걸린 열 %d개: %s\n"
+                             % (s.name, c.row, c.stars, c.score,
+                                ", ".join(c.recognized)))
+    best = [(s.name, s.best.row) for s in sheets if s.best]
+    sys.stdout.write("\n이대로 읽으려면:\n  %s\n"
+                     % " ".join("--sheet %s:%d" % (n, r) for n, r in best))
+    sys.stdout.write("그리고 `--save-profile <이름>` 을 붙이면 다음 달에는 "
+                     "`--profile <이름>` 만으로 끝납니다.\n")
+    return None
+
+
+#: 공개 권고문이 거의 없는 제조사. **숫자는 실측이다** (`scripts/inventory.py`).
+#: 이 사실을 말하지 않으면 '알려진 일치 없음' 이 '안전' 으로 읽힌다 (불변 규칙 1).
+THIN_COVERAGE_HINT = (
+    "LS ELECTRIC", "LSIS", "Omron", "Keyence", "Panasonic", "Hyundai",
+    "Doosan", "Hanwha", "HD현대", "오므론", "엘에스",
+)
+
+
+def _vendor_coverage_notice(rep) -> None:
+    """공개 권고문이 희박한 제조사가 들어오면 **그 사실을 말한다.**
+
+    CVE 축이 비어 있는 것과 안전한 것은 다르다. 이 안내가 없으면 현업자가
+    '우리 설비는 깨끗하다' 로 읽는다 — 이 제품이 막으려는 바로 그 오독이다.
+    """
+    seen = {}
+    for r in rep.results:
+        if r.action != "create" or not r.asset:
+            continue
+        v = ((r.asset.get("identity") or {}).get("vendor_raw") or "").strip()
+        if not v:
+            continue
+        for hint in THIN_COVERAGE_HINT:
+            if hint.lower() in v.lower():
+                seen[v] = seen.get(v, 0) + 1
+                break
+    if not seen:
+        return
+    sys.stdout.write("\n주의 — 공개 권고문이 희박한 제조사가 있습니다\n")
+    for v, n in sorted(seen.items(), key=lambda kv: -kv[1]):
+        sys.stdout.write("  %s %d대\n" % (v, n))
+    sys.stdout.write(
+        "  이 제조사는 기계 판독 가능한 권고문(CSAF)을 거의 내지 않습니다. "
+        "그래서 CVE 축은\n"
+        "  비어 있을 수 있고 **안전하다는 뜻이 아닙니다.** 이 설비는 통신 방식 "
+        "위험·공격 경로·\n"
+        "  점검 항목 근거로 봅니다 — 그 축은 권고문 없이도 돕니다.\n")
+
 
 
 def _cmd_audit(args) -> int:
@@ -918,8 +1073,18 @@ def build_parser() -> argparse.ArgumentParser:
     pf.add_argument("--as-of", required=True, dest="as_of")
     pf.set_defaults(func=_cmd_project)
 
-    im = _audited(sub.add_parser("import", help="CSV 자산 Import (기본 dry-run)"))
-    im.add_argument("--csv", required=True, type=Path)
+    im = _audited(sub.add_parser(
+        "import", help="자산대장 Import — CSV·엑셀 (기본 dry-run)"))
+    im.add_argument("--csv", type=Path, default=None,
+                    help="CSV 자산대장. UTF-8 과 CP949 를 모두 읽습니다")
+    im.add_argument("--xlsx", type=Path, default=None,
+                    help="엑셀 자산대장(.xlsx). 머리글 행은 짐작하지 않고 후보를 보여줍니다")
+    im.add_argument("--sheet", action="append", default=None, metavar="시트:행",
+                    help="읽을 시트와 머리글 행 (여러 번 줄 수 있습니다)")
+    im.add_argument("--profile", default=None,
+                    help="저장해 둔 매핑 프로파일 이름 또는 경로")
+    im.add_argument("--save-profile", default=None, dest="save_profile",
+                    metavar="이름", help="이번 매핑과 시트 선택을 그 이름으로 저장")
     im.add_argument("--mapping", type=Path, default=None, help="헤더→필드 매핑 JSON")
     im.add_argument("--out", required=True, type=Path, help="자산 JSON 출력 디렉터리")
     im.add_argument("--apply", action="store_true", help="실제로 쓴다 (기본은 dry-run)")

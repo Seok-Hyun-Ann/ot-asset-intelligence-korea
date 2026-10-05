@@ -29,20 +29,28 @@ MAX_ROWS = 100_000
 # 헤더 동의어 → 자산 필드. 후보를 제시할 뿐 확정하지 않는다.
 SYNONYMS: Dict[str, Tuple[str, ...]] = {
     "asset_id": ("asset_id", "자산id", "자산 id", "설비번호", "tag", "태그"),
-    "asset_type": ("asset_type", "장치종류", "장치 종류", "유형", "type"),
+    "asset_type": ("asset_type", "장치종류", "장치 종류", "유형", "type",
+                   "설비구분", "설비유형", "종류", "구분"),
+    # 사람이 읽는 설비명. **식별에 쓰지 않는다** — 현장이 붙인 이름이다.
+    # 이게 없으면 목록에 설비번호만 떠서 현장 사람이 자기 설비를 못 찾는다.
+    "label": ("label", "설비명", "설비 명", "장비명", "설비이름", "name",
+              "equipment_name", "호기", "설비"),
     "identity.vendor_raw": ("vendor", "제조사", "manufacturer", "maker", "벤더"),
     "identity.family_raw": ("family", "제품군", "series", "시리즈"),
     "identity.model_raw": ("model", "모델", "모델명", "product", "제품명"),
     "identity.order_number": ("order_number", "주문번호", "article", "품번", "sku"),
     "firmware": ("firmware", "펌웨어", "fw", "firmware_version", "펌웨어버전"),
-    "location.factory": ("factory", "공장", "site", "사업장"),
+    "location.factory": ("factory", "공장", "site", "사업장", "위치", "동"),
     "location.zone": ("zone", "구역", "cell", "셀", "라인"),
     "operations.safety_criticality": ("safety", "안전중요도", "safety_criticality", "안전"),
     "lifecycle_status": ("lifecycle", "수명주기", "eol", "lifecycle_status"),
     # CISA 자산 인벤토리 지침의 고우선 속성 (ADR-042). 사람이 아는 것은 사람이 넣는다.
     "address.ip": ("ip", "ip address", "ip주소", "아이피", "ipaddress"),
     "address.mac": ("mac", "mac address", "mac주소", "맥주소", "macaddress"),
-    "address.hostname": ("hostname", "호스트명", "host name", "장비명", "컴퓨터이름"),
+    "address.hostname": ("hostname", "호스트명", "host name", "컴퓨터이름"),
+    # 조치를 사람에게 붙이는 고리. CISA 지침의 Department/Owner.
+    "ownership.contact": ("contact", "담당자", "담당", "owner", "책임자", "관리자"),
+    "ownership.department": ("department", "부서", "팀", "소속", "담당부서"),
     "address.vlan": ("vlan", "vlan id", "브이랜"),
 }
 
@@ -88,10 +96,16 @@ class ImportReport:
     results: List[RowResult] = field(default_factory=list)
     sanitized_count: int = 0
     applied: bool = False
+    #: 무엇으로 읽었는지. 한국 Excel 기본 저장은 CP949 다 (ADR-046).
+    encoding: str = "utf-8-sig"
 
     def summary(self) -> str:
         L = ["행 %d · 생성 대상 %d · 중복 %d · 오류 %d"
              % (self.rows, self.created, self.duplicates, self.errors)]
+        if self.encoding != "utf-8-sig":
+            L.append("글자 인코딩 %s 로 읽었습니다 — 한글이 깨져 보이면 "
+                     "멈추고 알려 주세요 (깨진 제조사명은 '일치 항목 없음' 이 "
+                     "됩니다)." % self.encoding)
         if self.unmapped_headers:
             L.append("매핑되지 않은 헤더 %d개 (추측하지 않고 버립니다): %s"
                      % (len(self.unmapped_headers), ", ".join(self.unmapped_headers)))
@@ -109,17 +123,34 @@ def _set_path(obj: dict, dotted: str, value) -> None:
     cur[parts[-1]] = value
 
 
-def load_rows(csv_path) -> Tuple[List[str], List[Tuple[int, Dict[str, str]]]]:
+def load_rows(csv_path):
     """신뢰할 수 없는 바이트는 `safeio` 를 거친다 (ADR-041).
 
-    크기·행 수·디코딩 한계는 전부 거기 있다 — 여기서 다시 세면 두 벌이 어긋난다.
+    크기·행 수·인코딩 한계는 전부 거기 있다 — 여기서 다시 세면 두 벌이 어긋난다.
+    `(헤더, 행, 인코딩)` 을 돌려준다.
     """
     return bounded_csv_rows(csv_path, max_bytes=MAX_CSV_BYTES, max_rows=MAX_ROWS)
 
 
 def build_report(csv_path, mapping_override: Optional[dict] = None,
                  existing_ids=()) -> ImportReport:
-    headers, rows = load_rows(csv_path)
+    """CSV 한 장을 읽어 dry-run 보고서를 만든다."""
+    headers, rows, encoding = load_rows(csv_path)
+    return build_report_from_rows(headers, rows, Path(csv_path).stem,
+                                  mapping_override=mapping_override,
+                                  existing_ids=existing_ids, encoding=encoding)
+
+
+def build_report_from_rows(headers, rows, source_stem: str, *,
+                           mapping_override: Optional[dict] = None,
+                           existing_ids=(),
+                           encoding: str = "utf-8-sig") -> ImportReport:
+    """**형식과 무관한** 뒤 단계: 매핑 → 무해화 → 미상 보존 → 중복 검사.
+
+    CSV 와 엑셀이 이 함수를 공유한다 (ADR-046). 입구를 둘로 두고 뒤 단계를
+    복사하면 한쪽을 고칠 때 다른 쪽이 조용히 달라진다 — 이 저장소가 반복해서
+    겪은 실수다 (`_cmd_controls` 의 kev 누락, `evidence_for` 의 코드별 분기).
+    """
     mapping, unmapped = infer_mapping(headers)
     if mapping_override:
         # 매핑 파일이 항상 이긴다
@@ -127,7 +158,8 @@ def build_report(csv_path, mapping_override: Optional[dict] = None,
             mapping[h] = f
         unmapped = [h for h in unmapped if h not in mapping_override]
 
-    rep = ImportReport(mapping=mapping, unmapped_headers=unmapped)
+    rep = ImportReport(mapping=mapping, unmapped_headers=unmapped,
+                       encoding=encoding)
     seen = set(existing_ids)
 
     for line, row in rows:
@@ -151,7 +183,7 @@ def build_report(csv_path, mapping_override: Optional[dict] = None,
                     "type": "controller_firmware",
                     "version": {"raw": value} if value else {"state": "unknown"},
                     "method": "import",
-                    "evidence_id": "ev-csv-%s-line%d" % (Path(csv_path).stem, line),
+                    "evidence_id": "ev-%s-line%d" % (source_stem, line),
                 })
             elif value:
                 _set_path(asset, field_name, value)
@@ -161,7 +193,7 @@ def build_report(csv_path, mapping_override: Optional[dict] = None,
         a = asset.pop("address", None)
         if a:
             rec = {"method": "import",
-                   "evidence_id": "ev-csv-%s-line%d" % (Path(csv_path).stem, line)}
+                   "evidence_id": "ev-%s-line%d" % (source_stem, line)}
             for k in ("ip", "mac", "hostname"):
                 if a.get(k):
                     rec[k] = a[k]
@@ -208,3 +240,73 @@ def apply_report(rep: ImportReport, out_dir) -> List[Path]:
         written.append(p)
     rep.applied = True
     return written
+
+
+# --------------------------------------------------------------------------
+# 매핑 프로파일 (ADR-046)
+# --------------------------------------------------------------------------
+#: 사람이 고른 것을 남겨 두는 곳. **매달 다시 묻지 않기 위해서**다.
+#: 추론은 후보를 제시할 뿐이고 프로파일이 항상 이긴다 — 그 규칙은 원래부터
+#: `build_report(mapping_override=...)` 가 쥐고 있었고, 여기는 그 값을 담는다.
+PROFILE_DIR = "data/import-profiles"
+
+
+@dataclass
+class ImportProfile:
+    """한 대장을 어떻게 읽을지에 대한 사람의 결정."""
+    name: str
+    mapping: Dict[str, str] = field(default_factory=dict)
+    #: 엑셀일 때만. 시트 이름 → 머리글 행 번호. **짐작하지 않기 위해 적어 둔다.**
+    sheets: Dict[str, int] = field(default_factory=dict)
+    note: Optional[str] = None
+
+    def to_dict(self) -> dict:
+        return {"name": self.name, "mapping": self.mapping,
+                "sheets": self.sheets, "note": self.note}
+
+
+#: 파일명에 쓸 수 없는 글자. 백슬래시를 빠뜨리면 윈도우에서 경로가 갈라진다.
+_BAD_NAME_CHARS = set('\\/:*?"<>|')
+
+
+def profile_path(name: str, root=PROFILE_DIR) -> Path:
+    """프로파일 파일 경로. 이름이 파일명으로 쓰이므로 경로 조각을 막는다.
+
+    구분자만 지우면 `../../etc/passwd` 가 `....etcpasswd.json` 이 된다 — 디렉터리를
+    벗어나지는 않지만 점이 남아 읽기 어렵다. 점 뭉치를 하나로 줄이고 양끝 점·공백을
+    뗀다. 가운데 점(`1공장.상반기`)은 지킬 이유가 있으니 남긴다.
+    """
+    cleaned = "".join(ch for ch in name
+                      if ch not in _BAD_NAME_CHARS and ch.isprintable())
+    while ".." in cleaned:
+        cleaned = cleaned.replace("..", ".")
+    cleaned = cleaned.strip(". \t")
+    return Path(root) / ("%s.json" % (cleaned or "profile"))
+
+
+def save_profile(profile: ImportProfile, root=PROFILE_DIR) -> Path:
+    p = profile_path(profile.name, root)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(profile.to_dict(), ensure_ascii=False,
+                            indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    return p
+
+
+def load_profile(name_or_path, root=PROFILE_DIR) -> ImportProfile:
+    """외부 파일이므로 `safeio` 를 거친다 (ADR-041)."""
+    from .safeio import bounded_json_load
+    p = Path(name_or_path)
+    if not p.exists():
+        p = profile_path(str(name_or_path), root)
+    doc = bounded_json_load(p)
+    return ImportProfile(
+        name=doc.get("name") or p.stem,
+        mapping=dict(doc.get("mapping") or {}),
+        sheets={k: int(v) for k, v in (doc.get("sheets") or {}).items()},
+        note=doc.get("note"),
+    )
+
+
+def list_profiles(root=PROFILE_DIR) -> List[Path]:
+    d = Path(root)
+    return sorted(d.glob("*.json")) if d.exists() else []

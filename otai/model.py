@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 from .safeio import bounded_json_load
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -166,6 +166,13 @@ class Asset:
     remediation_evidence: Tuple[dict, ...] = ()
     network: Network = Network()
     lifecycle_status: Optional[str] = None   # supported | EOL | EOS | unknown
+    #: 사람이 읽는 설비명 ("프레스 3호기"). **식별에 쓰지 않는다** — 현장이 붙인
+    #: 이름이고 제조사의 제품명이 아니다. 화면에서 자기 설비를 찾는 데 쓴다.
+    #: 이게 없으면 목록에 `PLC-001` 만 뜨고 현장 사람이 자기 설비를 못 찾는다.
+    label: Optional[str] = None
+    #: 담당자·부서·연락처. CISA 자산 인벤토리 지침의 Department/Owner 항목이다.
+    #: 조치를 사람에게 붙이는 유일한 고리이고, 지금까지 스키마에 없었다.
+    ownership: dict = field(default_factory=dict)
 
     # ---- as_of 투영 -------------------------------------------------------
     def as_of(self, as_of_date: date) -> "Asset":
@@ -271,6 +278,8 @@ def asset_from_dict(data: dict) -> Asset:
         components=tuple(comps),
         location=data.get("location") or {},
         operations=data.get("operations") or {},
+        label=(data.get("label") or None),
+        ownership=data.get("ownership") or {},
         remediation_evidence=tuple(data.get("remediation_evidence") or ()),
         network=network,
         lifecycle_status=data.get("lifecycle_status"),

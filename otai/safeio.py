@@ -235,6 +235,33 @@ def bounded_json_load(path, *, max_bytes=MAX_JSON_BYTES, max_depth=MAX_JSON_DEPT
 MAX_CSV_BYTES = 32 * 1024 * 1024
 MAX_CSV_ROWS = 100_000
 
+#: 현장 표를 읽을 때 **순서대로** 시도하는 인코딩.
+#:
+#: 한국 Excel 의 「CSV(쉼표로 분리)」 기본 저장은 **CP949** 다. UTF-8 만 받으면
+#: 현업자의 **첫 시도가 100% 실패한다** — "엑셀에서 'CSV UTF-8' 로 다시 저장해
+#: 주세요" 라고 친절하게 말해도 설비 800대를 공장별로 다시 저장하게 만든다.
+#: 추측이 아니라 **순서 있는 시도**다: UTF-8 로 읽히면 UTF-8 이고, 아니면 CP949 다.
+#: 둘 다 아니면 그때 사람에게 묻는다.
+TABLE_ENCODINGS = ("utf-8-sig", "cp949")
+
+
+def _decode_table(raw: bytes, name: str) -> Tuple[str, str]:
+    """표 파일 바이트를 글자로. 쓴 인코딩을 함께 돌려준다.
+
+    **무엇으로 읽었는지 알려주는 이유**: 글자가 깨진 채로 조용히 들어가면
+    `제조사` 가 `������` 가 되어 식별이 통째로 실패하는데, 화면에는 그냥
+    '일치 항목 없음' 으로 뜬다 (불변 규칙 1 의 입구다).
+    """
+    for enc in TABLE_ENCODINGS:
+        try:
+            return raw.decode(enc), enc
+        except UnicodeDecodeError:
+            continue
+    raise UnsafeInput(
+        "글자 인코딩을 알 수 없습니다 (%s 로 읽어 봤습니다) — 엑셀에서 "
+        "'CSV UTF-8' 로 다시 저장하거나 .xlsx 를 그대로 주세요"
+        % " · ".join(TABLE_ENCODINGS), name)
+
 
 def bounded_csv_rows(path, *, max_bytes=MAX_CSV_BYTES, max_rows=MAX_CSV_ROWS):
     """CSV 를 한계 안에서 읽는다. 이 모듈이 `csv.reader` 를 부르는 **유일한** 곳이다.
@@ -246,8 +273,10 @@ def bounded_csv_rows(path, *, max_bytes=MAX_CSV_BYTES, max_rows=MAX_CSV_ROWS):
     `except UnsafeInput` 을 지나쳐 원시 traceback 이 사용자에게 간다 — 읽을 수 없는
     형식은 그렇다고 **말해야** 한다 (ADR-038).
 
-    돌려주는 것은 `(헤더, [(행 번호, 행 dict)])` 이고 행 번호는 1부터 센 파일
-    기준이다 (1행은 헤더이므로 데이터는 2부터).
+    돌려주는 것은 `(헤더, [(행 번호, 행 dict)], 인코딩)` 이고 행 번호는 1부터 센
+    파일 기준이다 (1행은 헤더이므로 데이터는 2부터). **인코딩을 함께 주는 이유**는
+    글자가 깨진 채 조용히 들어가면 `제조사` 가 깨져 식별이 통째로 실패하는데
+    화면에는 그냥 '일치 항목 없음' 으로 뜨기 때문이다.
     """
     import csv
     import io as _io
@@ -256,12 +285,8 @@ def bounded_csv_rows(path, *, max_bytes=MAX_CSV_BYTES, max_rows=MAX_CSV_ROWS):
     size = path.stat().st_size
     if size > max_bytes:
         raise UnsafeInput("CSV 크기 %d > 상한 %d" % (size, max_bytes), path.name)
-    try:
-        text = path.read_text(encoding="utf-8-sig")
-    except UnicodeDecodeError as exc:
-        raise UnsafeInput(
-            "UTF-8 로 읽을 수 없습니다: %s — 엑셀에서 'CSV UTF-8' 로 다시 저장해 "
-            "주세요" % exc, path.name)
+    raw = path.read_bytes()
+    text, encoding = _decode_table(raw, path.name)
     try:
         reader = csv.DictReader(_io.StringIO(text))
         headers = reader.fieldnames or []
@@ -272,7 +297,7 @@ def bounded_csv_rows(path, *, max_bytes=MAX_CSV_BYTES, max_rows=MAX_CSV_ROWS):
             rows.append((i, row))
     except csv.Error as exc:
         raise UnsafeInput("CSV 를 해석할 수 없습니다: %s" % exc, path.name)
-    return headers, rows
+    return headers, rows, encoding
 
 
 # --------------------------------------------------------------------------
