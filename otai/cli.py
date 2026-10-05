@@ -289,6 +289,10 @@ def _cmd_zeek(args) -> int:
                          % (len(scan.skipped_logs),
                             ", ".join(scan.skipped_logs[:5]),
                             " 외" if len(scan.skipped_logs) > 5 else ""))
+    for fname, reason in scan.failed_logs:
+        sys.stdout.write("  **못 읽은 로그** %s\n      %s\n" % (fname, reason))
+    if scan.failed_logs:
+        sys.stdout.write("  (한 장 때문에 멈추지 않습니다 — 나머지는 읽었습니다.)\n")
     w0, w1 = scan.window
     sys.stdout.write("  관측 창 %s ~ %s\n" % (w0 or "미상", w1 or "미상"))
     for k, v in sorted(scan.counters.items()):
@@ -321,14 +325,24 @@ def _cmd_zeek(args) -> int:
         sys.stdout.write("  **자산을 새로 만들지 않습니다** — 토폴로지가 그 IP 를 "
                          "자산으로 선언했을 때만 붙일 후보로 올립니다 (ADR-042).\n")
 
-    if scan.control_events:
+    if scan.control_counts:
         sys.stdout.write("\n관측된 제어 행위 %d건 — 포트가 열렸다는 추론이 아니라 "
-                         "**일어난 일**입니다\n" % len(scan.control_events))
-        for c in scan.control_events[:15]:
-            sys.stdout.write("  [%s] %s → %s  %s\n"
+                         "**일어난 일**입니다\n" % scan.control_total)
+        for kind, n in sorted(scan.control_counts.items()):
+            sys.stdout.write("  %-16s %d건%s\n" % (kind, n, {
+                "logic_change": "   ← 로직이 PLC 로 내려갔습니다 (변경)",
+                "logic_read": "   ← 프로그램이 밖으로 나갔습니다 (변경 아님)",
+                "logic_transfer": "   ← 방향 미상",
+            }.get(kind, "")))
+        for c in scan.control_events[:12]:
+            sys.stdout.write("    [%s] %s → %s  %s\n"
                              % (c.kind, c.src, c.dst, c.detail))
-        if len(scan.control_events) > 15:
-            sys.stdout.write("  … 외 %d건\n" % (len(scan.control_events) - 15))
+        if scan.control_truncated:
+            sys.stdout.write("    … 표본 %d건만 들고 있습니다 (나머지 %d건은 종류별로"
+                             "만 셉니다 — 수는 정확합니다)\n"
+                             % (len(scan.control_events), scan.control_truncated))
+        elif len(scan.control_events) > 12:
+            sys.stdout.write("    … 외 %d건\n" % (len(scan.control_events) - 12))
 
     sys.stdout.write("\n**로그도 시간 창입니다.** 여기 없는 경로가 없다는 뜻이 "
                      "아니고,\n도달성은 FALSE 가 아니라 미상으로 남습니다 "

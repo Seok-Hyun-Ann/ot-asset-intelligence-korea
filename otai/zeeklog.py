@@ -77,8 +77,17 @@ MODBUS_WRITE = ("WRITE_SINGLE_COIL", "WRITE_SINGLE_REGISTER",
                 "WRITE_MULTIPLE_COILS", "WRITE_MULTIPLE_REGISTERS",
                 "MASK_WRITE_REGISTER", "READ_WRITE_MULTIPLE_REGISTERS")
 
-#: S7comm 에서 **쓰기·로직 변경**으로 읽는 함수 이름.
-S7_WRITE = ("Write Var", "Download block", "Upload", "PLC Control", "PLC Stop")
+#: S7comm 에서 **쓰기·제어 행위**로 읽는 함수 이름.
+#:
+#: 값은 ICSNPP 의 실제 baseline 로그에서 확인한 것이다 — 처음엔 `"Write Var"`·
+#: `"PLC Stop"` 이라고 썼는데 실제 값은 **`"Write Variable"`·`"PLC Control"`** 이다.
+#: 업로드·다운로드는 전용 로그에서 따로 다룬다 (방향을 구분해야 하므로).
+S7_WRITE = ("Write Variable", "PLC Control")
+
+#: 메모리에 들고 있을 제어 행위 수. 7일치 현장 로그면 Modbus 쓰기가 수백만 건이
+#: 될 수 있다 — 전부 담으면 메모리가 터지고, 화면에 쏟으면 읽히지 않는다
+#: (ADR-031). 표본을 들고 **나머지는 종류별로 센다.**
+MAX_CONTROL_EVENTS = 5000
 
 
 @dataclass
@@ -136,17 +145,31 @@ class Flow:
 @dataclass
 class ZeekScan:
     logs_read: Dict[str, int] = field(default_factory=dict)
+    #: 아는 로그가 아니라서 **읽지 않은** 것 (열 이름을 짐작하지 않는다)
     skipped_logs: List[str] = field(default_factory=list)
+    #: 아는 로그인데 **읽다가 거부된** 것. `(파일명, 이유)` — 멈추지 않고 보고한다
+    failed_logs: List[Tuple[str, str]] = field(default_factory=list)
     endpoints: Dict[str, dict] = field(default_factory=dict)
     flows: Dict[str, Flow] = field(default_factory=dict)
     identities: Dict[str, Identity] = field(default_factory=dict)
+    #: 표본. 상한을 넘으면 더 담지 않고 `control_counts` 로만 센다
     control_events: List[ControlEvent] = field(default_factory=list)
+    #: 종류별 **전체** 건수. 표본보다 클 수 있다 — 그 사실을 화면이 말한다
+    control_counts: Dict[str, int] = field(default_factory=dict)
     window: Tuple[Optional[str], Optional[str]] = (None, None)
     counters: Dict[str, int] = field(default_factory=dict)
 
     @property
     def rows(self) -> int:
         return sum(self.logs_read.values())
+
+    @property
+    def control_total(self) -> int:
+        return sum(self.control_counts.values())
+
+    @property
+    def control_truncated(self) -> int:
+        return max(0, self.control_total - len(self.control_events))
 
 
 def _log_name(path: Path) -> str:
@@ -193,6 +216,23 @@ def _s(row: dict, *names) -> Optional[str]:
     return None
 
 
+def _conn_pair(row: dict) -> Tuple[Optional[str], Optional[str]]:
+    """제어 행위의 주체·대상은 **연결 기준**이다 (ADR-051).
+
+    ICSNPP 는 패킷마다 `source_h`·`destination_h` 를 **뒤집어** 적는다 —
+    `is_orig=F` 인 응답 행에서는 `source_h` 가 PLC 다. 그걸 그대로 쓰면
+    **PLC 가 쓰기를 '보냈다'** 고 기록되고, 요청·응답이 각각 세어져 건수도
+    두 배가 된다. 실제 baseline 로그에서 확인했다.
+    """
+    return (_s(row, "id.orig_h", "id_orig_h"), _s(row, "id.resp_h", "id_resp_h"))
+
+
+def _is_request(row: dict) -> bool:
+    """요청 행만 센다. `is_orig` 가 없는 로그는 전부 요청으로 본다."""
+    v = _s(row, "is_orig")
+    return v is None or str(v).upper().startswith("T")
+
+
 def scan_logs(paths) -> ZeekScan:
     """Zeek 로그 묶음을 읽는다. 디렉터리를 주면 아는 로그만 골라 읽는다."""
     files: List[Path] = []
@@ -214,7 +254,14 @@ def scan_logs(paths) -> ZeekScan:
             # **열 이름을 짐작하지 않는다.** 모르는 로그는 세어서 보고한다.
             scan.skipped_logs.append(f.name)
             continue
-        fields, rows = bounded_zeek_log(f)
+        try:
+            fields, rows = bounded_zeek_log(f)
+        except UnsafeInput as exc:
+            # **한 파일이 못 읽혀도 멈추지 않는다.** 현장 로그 디렉터리에는
+            # 로테이트 중인 파일·잘린 파일·btest 산출물이 섞인다. 한 장 때문에
+            # 수백 장을 버리지 않고, 무엇을 왜 못 읽었는지 이름을 대서 말한다.
+            scan.failed_logs.append((f.name, str(exc)))
+            continue
         scan.logs_read[name] = scan.logs_read.get(name, 0) + len(rows)
         for row in rows:
             ts = _ts(_s(row, "ts"))
@@ -224,6 +271,24 @@ def scan_logs(paths) -> ZeekScan:
             _ingest(scan, name, row)
     scan.window = (first, last)
     return scan
+
+
+def _add_event(scan: ZeekScan, ev: ControlEvent) -> None:
+    """전체 건수는 **항상** 세고, 표본은 상한까지만 담는다.
+
+    역할 힌트가 쓰는 표시는 끝점에 **그때 바로** 남긴다. 표본만 훑으면 상한을
+    넘긴 뒤에 나온 장비가 '아무 단서 없음' 으로 떨어진다 — 잘라낸 것이 판정을
+    바꾸면 안 된다 (ADR-031 의 '목록을 쏟지 말되 수는 정확히' 와 같은 선).
+    """
+    scan.control_counts[ev.kind] = scan.control_counts.get(ev.kind, 0) + 1
+    if len(scan.control_events) < MAX_CONTROL_EVENTS:
+        scan.control_events.append(ev)
+    dst = _touch(scan, ev.dst)
+    if dst is not None:
+        dst.setdefault("got", set()).add(ev.kind)
+    src = _touch(scan, ev.src)
+    if src is not None:
+        src.setdefault("sent", set()).add(ev.kind)
 
 
 def _touch(scan: ZeekScan, ip: Optional[str]) -> Optional[dict]:
@@ -325,33 +390,60 @@ def _ingest(scan: ZeekScan, log: str, row: dict) -> None:
             if prop == "firmware-revision":
                 ident.revision = value
             scan.identities[ip] = ident
-    elif log == "modbus":
-        func = (_s(row, "func") or "").upper()
-        if src and dst and func in MODBUS_WRITE:
-            scan.control_events.append(ControlEvent(
-                ts=_ts(_s(row, "ts")), kind="control_write", src=src, dst=dst,
-                protocol="modbus_tcp",
-                detail="Modbus %s 가 관측됐습니다" % func))
-    elif log == "s7comm":
-        func = _s(row, "function_name") or ""
-        if src and dst and any(w.lower() in func.lower() for w in S7_WRITE):
-            scan.control_events.append(ControlEvent(
-                ts=_ts(_s(row, "ts")), kind="control_write", src=src, dst=dst,
-                protocol="s7comm", detail="S7comm %s 가 관측됐습니다" % func))
-    elif log == "s7comm_upload_download":
-        if src and dst:
-            scan.control_events.append(ControlEvent(
-                ts=_ts(_s(row, "ts")), kind="logic_change", src=src, dst=dst,
-                protocol="s7comm",
-                detail="블록 %s %s (%s) — **로직 변경이 실제로 일어났습니다**"
-                       % (_s(row, "block_type") or "", _s(row, "block_number") or "",
-                          _s(row, "function_code") or "")))
-    elif log == "dnp3":
-        fc = (_s(row, "fc_request") or "").upper()
-        if src and dst and ("WRITE" in fc or "OPERATE" in fc or "DIRECT" in fc):
-            scan.control_events.append(ControlEvent(
-                ts=_ts(_s(row, "ts")), kind="control_write", src=src, dst=dst,
-                protocol="dnp3", detail="DNP3 %s 가 관측됐습니다" % fc))
+    elif log in ("modbus", "s7comm", "s7comm_upload_download", "dnp3"):
+        # 제어 행위는 **연결 기준 + 요청 행만** 센다 (위 `_conn_pair` 주석 참조).
+        if not _is_request(row):
+            return
+        a, b = _conn_pair(row)
+        a, b = a or src, b or dst
+        if not a or not b:
+            return
+        ts = _ts(_s(row, "ts"))
+
+        if log == "modbus":
+            func = (_s(row, "func") or "").upper()
+            if func in MODBUS_WRITE:
+                _add_event(scan, ControlEvent(
+                    ts=ts, kind="control_write", src=a, dst=b,
+                    protocol="modbus_tcp",
+                    detail="Modbus %s 가 관측됐습니다" % func))
+        elif log == "s7comm":
+            func = _s(row, "function_name") or ""
+            if any(w.lower() in func.lower() for w in S7_WRITE):
+                _add_event(scan, ControlEvent(
+                    ts=ts, kind="control_write", src=a, dst=b,
+                    protocol="s7comm", detail="S7comm %s 가 관측됐습니다" % func))
+        elif log == "s7comm_upload_download":
+            # **업로드는 로직 변경이 아니다.** 실제 baseline 로그의 값은 전부
+            # "Start Upload"·"Upload"·"End Upload" 였는데, 처음엔 이 로그의 모든
+            # 행을 "로직 변경이 실제로 일어났습니다" 로 적었다 — 프로그램을 읽어
+            # 간 것을 바꿨다고 말하는 것이고, OT 에서는 사고 대응을 잘못 띄운다.
+            func = _s(row, "function_name", "function_code") or ""
+            low = func.lower()
+            named = " ".join(filter(None, [_s(row, "block_type"),
+                                           _s(row, "block_number")]))
+            block = ("블록 %s" % named) if named else "블록"
+            if "download" in low:
+                kind, what = "logic_change", (
+                    "%s이 PLC 로 내려갔습니다 — **로직 변경이 실제로 "
+                    "일어났습니다**" % block)
+            elif "upload" in low:
+                kind, what = "logic_read", (
+                    "%s을 읽어 갔습니다 — 변경은 아니지만 프로그램이 밖으로 "
+                    "나간 것입니다" % block)
+            else:
+                kind, what = "logic_transfer", (
+                    "%s 전송이 관측됐습니다 (방향 미상 — function_name=%r)"
+                    % (block, func))
+            _add_event(scan, ControlEvent(
+                ts=ts, kind=kind, src=a, dst=b, protocol="s7comm",
+                detail="%s (%s)" % (what, func) if func else what))
+        elif log == "dnp3":
+            fc = (_s(row, "fc_request") or "").upper()
+            if "WRITE" in fc or "OPERATE" in fc or "DIRECT" in fc:
+                _add_event(scan, ControlEvent(
+                    ts=ts, kind="control_write", src=a, dst=b,
+                    protocol="dnp3", detail="DNP3 %s 가 관측됐습니다" % fc))
 
 
 def to_topology(scan: ZeekScan) -> dict:
@@ -399,7 +491,11 @@ def to_topology(scan: ZeekScan) -> dict:
             "logs": dict(sorted(scan.logs_read.items())),
             "rows": scan.rows, "window": list(scan.window),
             "skipped_logs": sorted(scan.skipped_logs),
-            "control_events": len(scan.control_events),
+            "failed_logs": [{"file": n, "reason": r}
+                            for n, r in sorted(scan.failed_logs)],
+            "control_events": scan.control_total,
+            "control_counts": dict(sorted(scan.control_counts.items())),
+            "control_events_sampled": len(scan.control_events),
             "identities": len(scan.identities),
             "note": "Zeek/ICSNPP 로그에서 **관측된 통신만** 담았습니다. 로그도 "
                     "시간 창이므로 여기 없는 경로가 없다는 뜻이 아닙니다 — "
@@ -415,14 +511,17 @@ def _role_hint(e: dict, scan: ZeekScan) -> Tuple[Optional[str], Optional[str]]:
     제어 프로토콜 서버로 **접속을 받았으면** 제어 장비일 수 있고, 로직 변경을
     받았으면 그 근거가 훨씬 세다 — 포트가 열렸다는 추론이 아니라 일어난 일이다.
     """
-    ip = e["ip"]
-    if any(c.kind == "logic_change" and c.dst == ip for c in scan.control_events):
-        return "plc", "로직 블록 전송을 **받았습니다** (관측)"
-    if any(c.kind == "control_write" and c.dst == ip for c in scan.control_events):
+    LOGIC = {"logic_change", "logic_read", "logic_transfer"}
+    got = e.get("got") or set()
+    sent = e.get("sent") or set()
+    if "logic_change" in got:
+        return "plc", "로직 블록을 **받았습니다** (관측 — 프로그램이 내려갔다)"
+    if got & LOGIC:
+        return "plc", "로직 블록 전송에 관여했습니다 (관측 — 프로그램을 들고 있다)"
+    if "control_write" in got:
         return "plc", "제어 쓰기를 **받았습니다** (관측)"
-    if any(c.kind in ("control_write", "logic_change") and c.src == ip
-           for c in scan.control_events):
-        return "workstation", "제어 쓰기를 **보냈습니다** (관측)"
+    if sent & (LOGIC | {"control_write"}):
+        return "workstation", "제어 쓰기·로직 전송을 **보냈습니다** (관측)"
     if "server" in e["roles"]:
         names = [protocol_label(p) for p in e["protocols"]
                  if is_control_protocol(p)]

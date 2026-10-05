@@ -1130,9 +1130,69 @@ List Identity 는 **응답**이므로 자기 신원을 보낸 쪽(`source_h`)이
   더하는 일이다.
 - **`cip_io.log` 를 안 읽는다.** CIP I/O 는 실시간 제어 데이터이고 양이 크다.
   읽을 값이 있는지부터 재야 한다.
-- **Zeek 을 직접 돌리지 않았다.** 설치돼 있지 않아 테스트 로그는 저장소 문서의
-  열 목록 그대로 만들었다. 실제 Zeek 출력과 어긋날 수 있다 — 현장 로그로 한 번
-  돌려 보는 것이 다음 검증이다.
+- **상시 센서는 여전히 없다.** 이것은 센서가 **이미 있는** 현장에만 값이 있다.
+- `cip_io.log`(CIP I/O 실시간 데이터)는 안 읽는다. 양이 크고 읽을 값이 있는지부터
+  재야 한다.
+- **Zeek 바이너리를 직접 돌리지는 못했다** (Windows 네이티브 미지원, WSL 의 `sudo`
+  가 비번을 요구). 대신 **ICSNPP 저장소의 btest baseline 로그**로 검증했다 —
+  그것은 CISA 가 커밋해 둔 **Zeek 이 실제로 생성한 출력**이다
+  (`cisagov/icsnpp-*/testing/baseline/...`). 라이브 실행과 다른 점: 타임스탬프가
+  `XXXXXXXXXX.XXXXXX` 로 치환돼 있고 `#fields` 머리글이 btest 주석으로 바뀐 파일이
+  있다. 그 두 가지는 아래에서 오히려 결함을 잡아 줬다.
+
+### 실제 Zeek 출력으로 검증했고 — 네 군데가 틀려 있었다
+
+문서(README 산문)만 보고 쓴 것과 실제 생성 출력이 달랐다. **문서를 옮긴 것도
+짐작이었다.**
+
+| 틀린 것 | 실제 | 결과 |
+|---|---|---|
+| `s7comm_upload_download` 의 `function_code` | 그 열은 **없다.** `function_name` 이다 | 상세 문구에 빈 괄호가 찍혔다 |
+| 이 로그의 모든 행을 `logic_change` | 실제 값은 전부 **`Start Upload`·`Upload`·`End Upload`** | **업로드를 "로직 변경이 실제로 일어났습니다" 라고 말했다** |
+| 제어 행위의 주체를 `source_h` 로 | ICSNPP 는 패킷마다 **뒤집어** 적는다 (`is_orig=F` 면 `source_h` 가 PLC) | **PLC 가 쓰기를 보냈다**고 기록되고 건수가 두 배 |
+| `S7_WRITE = ("Write Var", "PLC Stop", …)` | 실제는 **`Write Variable`·`PLC Control`** | `PLC Stop` 은 한 번도 안 맞았다 |
+
+둘째가 가장 나쁘다. OT 에서 "로직 변경이 일어났다" 는 **사고 대응을 띄우는 문장**
+이고, 업로드는 프로그램을 읽어 간 것이다 — 정찰·유출 신호이긴 하지만 변경이
+아니다. 지금은 셋으로 가른다: `logic_change`(다운로드) · `logic_read`(업로드) ·
+`logic_transfer`(방향 미상, `function_name` 을 그대로 싣는다).
+
+세 번째를 고치면서 제어 행위는 **연결 기준(`id.orig_h`→`id.resp_h`) + 요청 행
+(`is_orig=T`)만** 세게 했다.
+
+### 그리고 맞은 것 — 진짜 데이터가 증명했다
+
+BACnet baseline(217행 i-Am, 2,800행 속성)에서 **장비 30대의 제조사·모델·펌웨어**가
+그대로 나왔다: DAIKIN Industries · SAMSON AG · Siemens Schweiz AG · Mitsubishi
+Electric Building Techno-Service · Phoenix Controls · Veris Industries · WILO SE …
+`firmware-revision`·`model-name`·`application-software-version` 가 각각 240행씩
+실재했다 — 내가 찾는 속성 이름이 맞았다.
+
+`cip_identity` 의 **`source_h` 선택도 실제 데이터가 확인해 줬다**: 베이스라인 행은
+`is_orig=F`, `id.resp_h = 10.1.1.164(44818)` 이 장비이고 `source_h` 가 바로 그것,
+`destination_h` 는 물어본 `10.1.1.167` 이다. 제품명은 `1756-ENBT/A`, 제조사
+`Rockwell Automation/Allen-Bradley`, 리비전 `4.3`, S/N `0x00524d8e`.
+
+### 실제 파일이 잡은 결함 둘 더
+
+- **한 장이 못 읽히면 전체가 멈췄다.** btest baseline 의 `cip_identity.log` 는
+  `#fields` 머리글이 btest 주석으로 바뀌어 있어 우리 리더가 (옳게) 거부했고, 그
+  예외가 **스캔 전체를 죽였다.** 현장 로그 디렉터리에는 로테이트 중인 파일·잘린
+  파일이 섞인다 — 한 장 때문에 수백 장을 버리지 않는다. 이제 `failed_logs` 에
+  파일명과 이유를 담고 계속 읽으며, `provenance` 에도 남는다. **거부 자체는
+  고치지 않았다** — 열 이름을 짐작하지 않는 것이 맞다.
+- **제어 행위를 전부 메모리에 담고 있었다.** 7일치 현장 로그면 Modbus 쓰기가
+  수백만 건이 된다. 표본 5,000건만 들고 **종류별 전체 수는 정확히 센다**
+  (`control_counts`). 그리고 역할 힌트가 표본을 훑고 있었는데, 그러면 상한을 넘긴
+  뒤에 나온 장비가 '단서 없음' 으로 떨어진다 — 끝점에 그때 바로 표시를 남기게
+  바꿨다. **잘라낸 것이 판정을 바꾸면 안 된다.**
+
+### 남은 검증
+
+라이브 Zeek 실행(+`zkg install icsnpp-*`)은 아직이다. baseline 은 CISA 가 만든
+실제 출력이지만 **플러그인 판·Zeek 판에 따라 열이 더 늘 수 있다** — 우리 리더는
+`#fields` 를 읽으므로 열이 늘어도 깨지지 않지만, 새 열에 더 좋은 정보가 들어올
+가능성은 확인하지 못했다.
 - 상시 센서는 여전히 없다. 이것은 **"센서를 만들지 않고 센서의 결과를 읽는"**
   길이고, 센서가 없는 현장에는 아무것도 주지 않는다.
 
