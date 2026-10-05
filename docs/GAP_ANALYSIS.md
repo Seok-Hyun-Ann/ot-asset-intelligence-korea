@@ -196,7 +196,9 @@ Huff 외, [*I Can't Patch My OT Systems!*](https://arxiv.org/abs/2510.06951) (20
 | **e** | **SSVC 설명 축** | `priority.py` 에 병기 (대체 아님) | 작음 |
 | ~~f~~ | ~~통제 항목 매핑~~ → **KISA 제어시스템(ADR-043) + NIST 800-82r3 OT Overlay(ADR-044) 완료.** 62443-3-3 · CSF · NERC CIP 는 남음. **화면 연결은 (h)** | `data/controls/` · `otai/controls.py` | — |
 | **g** | **D3FEND 어휘**를 차단 후보에 | `paths.py` · `terms.ts` | 중간 |
-| **h** | ~~점검 항목 근거를 CLI 로~~ → **`otai controls` 완료.** 남은 것은 **웹 화면·보고서 내보내기** | `api.py` · 표 25 새 화면 | 작음 |
+| ~~h~~ | ~~점검 항목 근거를 CLI 로~~ → **`otai controls` + `otai report` 완료** (ADR-049). 남은 것은 **웹 화면의 보고서 버튼** | `api.py` · 표 25 | — |
+| **i** | **현장 반입** — 엑셀·CP949·매핑 프로파일·담당자 (ADR-046) 완료. 남은 것은 **웹 화면의 매핑 편집**(API 는 이미 받는다) | `screens.tsx` | 작음 |
+| **j** | **자산대장의 `구역` 열에서 골격 토폴로지 생성** — 지금은 캡처가 있어야 노드가 생긴다. xlsx 로 들어온 800대가 그래프 안에 존재하게 만드는 일 | `zonemap.py` · `csvimport.py` | 중간 |
 
 **(a) 를 먼저 하는 이유**: 측정된 격차이고, 데이터가 이미 수집되고 있으며, CISA 기준의
 세 항목을 한 번에 채우고, `capture.py` 가 만든 토폴로지와 자산 목록이 **같은 장비를

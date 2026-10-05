@@ -418,7 +418,7 @@
     "identity_completeness",
     "network_addresses"
    ],
-   "note": "제조사·모델명·펌웨어는 식별 사다리와 완성도 L0~L5 로 답한다. 주소(IP·MAC·VLAN)는 ADR-042 로 들어왔다. **담당자**(소유 부서)와 **설치 SW** 는 아직 담지 못한다 — 설치 SW 는 SBOM 입력이 필요하다(GAP_ANALYSIS 항목 b)."
+   "note": "제조사·모델명·펌웨어는 식별 사다리와 완성도 L0~L5 로 답한다. 주소(IP·MAC·VLAN)는 ADR-042 로, 담당자·부서는 ADR-046 으로 들어왔다. 설치 SW 목록은 아직 담지 못한다 - SBOM 입력이 필요하다(GAP_ANALYSIS.md 항목 b)."
   },
   {
    "code": "C-44",

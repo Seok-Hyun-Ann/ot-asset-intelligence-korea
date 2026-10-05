@@ -16,7 +16,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import Body, FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import (FileResponse, JSONResponse, RedirectResponse,
+                               Response)
 from fastapi.staticfiles import StaticFiles
 
 from .applicability import PHRASES, decide_applicability
@@ -803,6 +804,39 @@ def build_app(*, db: str, advisory_paths: List[Path], as_of: str,
             "pairs": sweep["pairs"], "excluded": sweep["skipped"],
             "evaluated": sweep["evaluated"], "no_match": sweep["no_match"],
             "findings": len(sweep["rows"]), "seconds": sweep["seconds"]}}
+
+    @app.get("/api/actions.csv")
+    def actions_csv(bucket: str = None, lens: str = "default", zone: str = None):
+        """할 일을 CSV 로 내려준다 (ADR-049).
+
+        **티켓 시스템 연동을 만들지 않는다.** 이걸 Jira·Redmine 에 수동으로 올려
+        쓰고, 쓸모가 증명된 뒤에 붙이면 된다 — 먼저 만들면 쓰지도 않는 연동을
+        유지하게 된다.
+
+        BOM 을 붙인다. 한국 Excel 은 그래야 UTF-8 CSV 를 제대로 연다.
+        """
+        import csv as _csv
+        import io as _io
+
+        payload = actions(bucket=bucket, lens=lens, zone=zone)
+        buf = _io.StringIO()
+        w = _csv.writer(buf)
+        w.writerow(["등급", "자산", "구역", "공장", "식별 완성도", "권고문",
+                    "판정", "강제규칙", "KEV", "확정 시 최소", "기준 시점"])
+        for it in payload["items"]:
+            w.writerow([it.get("bucket", ""), it.get("asset_id", ""),
+                        it.get("zone", ""), it.get("factory", ""),
+                        it.get("level", ""), it.get("advisory_id", ""),
+                        it.get("status_ko") or it.get("status", ""),
+                        ", ".join(it.get("fired_rules") or ()),
+                        ", ".join((it.get("kev_cves") or ())[:3]),
+                        it.get("floor_if_confirmed") or "", CTX["as_of"]])
+        body = "﻿" + buf.getvalue()
+        name = "otai-actions-%s.csv" % CTX["as_of"]
+        return Response(content=body.encode("utf-8"),
+                        media_type="text/csv; charset=utf-8",
+                        headers={"Content-Disposition":
+                                 'attachment; filename="%s"' % name})
 
     # ---------------------------------------------------------------- 경로
     @app.get("/api/graphs/attack-paths")

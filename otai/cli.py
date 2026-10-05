@@ -76,6 +76,7 @@ def _cmd_queue(args) -> int:
     if snap:
         kev = load_kev(snap)
 
+    pol = _policy(args)          # 승인된 정책을 본다 — 웹앱과 같아야 한다
     topo = load_topology(args.topology) if args.topology else None
     advisories = [load_advisory(p) for p in args.advisory]
     assets = []
@@ -100,7 +101,7 @@ def _cmd_queue(args) -> int:
             items.append(
                 evaluate_priority(d, asset, kev=kev,
                                   max_cvss=_max_cvss(adv, d.cves), lens=args.lens,
-                                  topology=topo)
+                                  topology=topo, policy=pol)
             )
 
     ordered = sort_queue(items)
@@ -186,6 +187,21 @@ def _cmd_render(args) -> int:
     return 0
 
 
+def _policy(args):
+    """승인된 정책을 읽는다. **CLI 와 웹이 같은 정책을 봐야 한다.**
+
+    감사에서 나온 것: `queue` 와 `decide` 가 `policy=` 를 아예 넘기지 않아
+    `DEFAULT_POLICY` 로 판정했다. 웹앱만 `active_policy()` 를 읽었으므로 **같은
+    자산이 CLI 와 화면에서 다른 등급**으로 나올 수 있었다. 정책 파일을 고치고
+    "왜 안 변하지" 로 반나절 태울 자리다.
+    """
+    data = getattr(args, "data", None)
+    if data:
+        return active_policy(Path(data))
+    default = Path("data")
+    return active_policy(default) if default.exists() else DEFAULT_POLICY
+
+
 def _audit(args, action, **kw):
     """감사 이벤트 (FR-GOV-002). actor 는 인증되지 않은 주장이다 (ADR-019)."""
     if not getattr(args, "store", None):
@@ -247,6 +263,85 @@ def _cmd_bundle_rollback(args) -> int:
            detail={"reason": res.reason, "previous": res.previous})
     sys.stdout.write("%s — %s\n" % ("롤백" if res.ok else "실패", res.reason))
     return 0 if res.ok else 1
+
+
+def _cmd_report(args) -> int:
+    """보고서를 낸다 — 엑셀 · 인쇄용 HTML · CSV (ADR-049).
+
+    `queue` 와 **같은 파이프라인**을 쓴다. 보고서가 따로 계산하면 화면과 다른 수를
+    말하게 된다. 확장자로 형식을 고른다.
+    """
+    from .report import build
+
+    assets = []
+    for pattern in args.assets:
+        p = Path(pattern)
+        assets.extend(sorted(p.glob("*.json")) if p.is_dir() else [p])
+    if not assets:
+        sys.stderr.write("자산 파일을 찾지 못했습니다: %s\n" % args.assets)
+        return 2
+
+    bodies, objs = [], []
+    for ap in assets:
+        bodies.append(bounded_json_load(ap))
+        objs.append(load_asset(ap))
+
+    advisories = []
+    for pattern in (args.advisory or ()):
+        p = Path(pattern)
+        for q in (sorted(p.glob("*.json")) if p.is_dir() else [p]):
+            advisories.append(load_advisory(q))
+
+    kev = None
+    snap = args.kev or find_snapshot()
+    if snap:
+        kev = load_kev(snap)
+    topo = load_topology(args.topology) if args.topology else None
+
+    sys.stdout.write("보고서를 만듭니다 — 자산 %d대 · 권고문 %d건 · 기준 시점 %s\n"
+                     % (len(objs), len(advisories), args.as_of))
+    rep = build(bodies=bodies, assets=objs, advisories=advisories,
+                as_of=args.as_of, topology=topo, kev=kev,
+                policy=_policy(args), lens=args.lens)
+
+    out = Path(args.out)
+    suffix = out.suffix.lower()
+    if suffix == ".xlsx":
+        from .report_xlsx import write as _write
+    elif suffix == ".csv":
+        from .report_html import write_csv as _write
+    elif suffix in (".html", ".htm"):
+        from .report_html import write as _write
+    else:
+        sys.stderr.write("확장자로 형식을 고릅니다 — .xlsx · .html · .csv 중에서 "
+                         "주세요 (받은 것: %s)\n" % (suffix or "없음"))
+        return 2
+
+    try:
+        path = _write(rep, out)
+    except UnsafeInput as exc:
+        sys.stderr.write("%s\n" % exc)
+        return 2
+
+    size = path.stat().st_size
+    sys.stdout.write("%s  (%.1fKB)\n" % (path, size / 1024))
+    sys.stdout.write("  할 일 %d건 · 통신 방식 위험 %d건 · 점검 항목 %d행 · "
+                     "자산 %d대\n" % (len(rep.actions), len(rep.exposures),
+                                    len(rep.controls), len(rep.assets)))
+    if rep.synthetic_assets:
+        sys.stdout.write("  합성 자산 %d대가 포함됐습니다 — 보고서가 그 사실을 "
+                         "싣습니다\n" % rep.synthetic_assets)
+    for c in rep.thin_vendors:
+        sys.stdout.write("  주의: %s 자산 %d대 · 공개 권고문 %d건 — CVE 축이 "
+                         "비고 **안전하다는 뜻이 아닙니다**\n"
+                         % (c.vendor, c.our_assets, c.advisories))
+    if suffix in (".html", ".htm"):
+        sys.stdout.write("  브라우저에서 열어 '인쇄 → PDF 로 저장' 하면 됩니다 "
+                         "(외부 자원 0개)\n")
+    _audit(args, "report_written", subject=str(path),
+           detail={"format": suffix.lstrip("."), "assets": len(rep.assets),
+                   "actions": len(rep.actions), "bytes": size})
+    return 0
 
 
 def _cmd_controls(args) -> int:
@@ -993,6 +1088,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="사용자 렌즈 — 같은 버킷 안의 정렬만 바꾼다")
     q.add_argument("--kev", type=Path, default=None,
                    help="KEV 스냅샷 경로 (기본: data/kev 의 최신)")
+    q.add_argument("--data", type=Path, default=None,
+                   help="정책 디렉터리 (기본: ./data). 승인된 정책으로 판정한다")
     q.add_argument("--json", action="store_true")
     q.add_argument("--show-all", action="store_true",
                    help="no_known_match 항목도 표시")
@@ -1056,6 +1153,25 @@ def build_parser() -> argparse.ArgumentParser:
     br.add_argument("--to", required=True)
     br.add_argument("--as-of", required=True, dest="as_of")
     br.set_defaults(func=_cmd_bundle_rollback)
+
+    rp = _audited(sub.add_parser(
+        "report", help="보고서 — 엑셀·인쇄용 HTML·CSV (확장자로 고릅니다)"))
+    rp.add_argument("--assets", required=True, nargs="+", type=Path,
+                    help="자산 JSON 파일 또는 디렉터리")
+    rp.add_argument("--advisory", nargs="+", type=Path, default=None,
+                    help="CSAF 2.0 권고 JSON (파일 또는 디렉터리)")
+    rp.add_argument("--topology", type=Path, default=None,
+                    help="없으면 도달성은 미상으로 남는다")
+    rp.add_argument("--kev", type=Path, default=None,
+                    help="KEV 스냅샷 (기본: data/kev 의 최신)")
+    rp.add_argument("--lens", default="default", choices=sorted(LENS_PRESETS),
+                    help="렌즈는 같은 등급 안의 순서만 바꿉니다")
+    rp.add_argument("--data", type=Path, default=None,
+                    help="정책 디렉터리 (기본: ./data)")
+    rp.add_argument("--out", required=True, type=Path,
+                    metavar="보고서.xlsx|.html|.csv")
+    rp.add_argument("--as-of", required=True, dest="as_of")
+    rp.set_defaults(func=_cmd_report)
 
     ct = _audited(sub.add_parser(
         "controls", help="점검 항목에 근거를 댄다 (준수 판정 아님)"))

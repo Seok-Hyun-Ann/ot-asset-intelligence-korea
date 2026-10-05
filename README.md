@@ -269,6 +269,31 @@ python -m otai controls \
 `--topology` 를 주지 않으면 도달성은 **미상으로 남습니다** — '분리됐다' 가 아닙니다.
 웹 화면 연결은 아직 없습니다 ([`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md) 의 (h)).
 
+## 보고서로 내보내기 — 상사·감사인에게 줄 것
+
+```bash
+python -m otai report --assets fixtures/assets --advisory data/csaf/cisa/2026 \
+  --topology fixtures/topology/purdue-62443-reference.json \
+  --as-of 2026-09-11 --out out/보고서.xlsx     # .html · .csv 도 됩니다
+```
+
+| 형식 | 받는 사람 | 담는 것 |
+|---|---|---|
+| `.xlsx` | 실무·감사 제출 | 시트 7장 — 요약 · 할 일 · 자산 대장 · 통신 방식 위험 · **제조사 커버리지** · KISA 점검항목 · NIST OT Overlay |
+| `.html` | 상사·보고 | 인쇄용. 브라우저 **'인쇄 → PDF 로 저장'** 으로 끝. 외부 자원 0개 |
+| `.csv` | Jira·Redmine | 할 일 평탄표. BOM 을 붙여 한국 Excel 이 바로 엽니다 |
+
+화면에서는 `GET /api/actions.csv` 로 바로 내려받습니다.
+
+> **같은 입력이면 같은 파일이 나옵니다.** 보고서에 '생성 시각' 이 없고 **기준 시점**만 있어서,
+> 감사인이 다시 돌려 **해시를 맞춰 재현을 확인**할 수 있습니다. 엑셀도 그렇게 만들었습니다 —
+> `openpyxl` 이 zip 과 문서 속성에 박는 '지금' 을 둘 다 기준 시점으로 고정합니다.
+
+보고서는 **주장하지 않는 것을 직접 싣습니다.** 등급·경로 정확도를 주장하지 않고, 합성 자산이
+섞여 있으면 몇 대인지 표지에 적고, 할 일이 0건이어도 *"해당하는 권고문이 없습니다 — 안전하다는
+뜻이 아닙니다"* 라고 씁니다. PDF 라이브러리와 티켓 연동은 **의도적으로 넣지 않았습니다**
+([ADR-049](docs/DECISIONS.md)).
+
 ## 무엇을 주장하고 무엇을 주장하지 않는가
 
 **이 구분이 이 프로젝트의 핵심입니다.** 상세는 [`docs/VERIFICATION.md`](docs/VERIFICATION.md).
@@ -301,7 +326,7 @@ python -m otai controls \
 | 문서 | 내용 |
 |---|---|
 | [`docs/SPEC_v1.0.md`](docs/SPEC_v1.0.md) | 상세 기획서 (22장 + 부록, 표 52개) — 모든 설계의 1차 근거 |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADR 48개 — 무엇을 왜 그렇게 정했고, 무엇을 기각했고, 무엇이 한계인가 |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADR 49개 — 무엇을 왜 그렇게 정했고, 무엇을 기각했고, 무엇이 한계인가 |
 | [`docs/VERIFICATION.md`](docs/VERIFICATION.md) | 검증 매트릭스 — 무엇을 어떤 근거로 검증했는가 |
 | [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md) | 비슷한 공개 도구들과의 격차 — 무엇이 없고 어떻게 붙이는가 |
 
