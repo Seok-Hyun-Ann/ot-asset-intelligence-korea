@@ -301,6 +301,119 @@ def bounded_csv_rows(path, *, max_bytes=MAX_CSV_BYTES, max_rows=MAX_CSV_ROWS):
 
 
 # --------------------------------------------------------------------------
+# Zeek 로그 (ADR-051)
+# --------------------------------------------------------------------------
+MAX_ZEEK_BYTES = 512 * 1024 * 1024
+MAX_ZEEK_ROWS = 5_000_000
+#: 압축 해제 총량 상한. 로테이트된 Zeek 로그는 `.log.gz` 이고, **gzip 폭탄은
+#: zip 폭탄과 같은 공격**이다 — 1MB 가 수십 GB 로 풀릴 수 있다. `inspect_zip` 처럼
+#: 중앙 디렉터리를 먼저 볼 수가 없으므로(gzip 에는 그런 것이 없다) **읽어 가며**
+#: 센다. gzip 꼬리의 ISIZE 필드는 공격자가 고치면 거짓말을 하므로 믿지 않는다.
+MAX_ZEEK_UNCOMPRESSED = 2 * 1024 * 1024 * 1024
+
+#: Zeek TSV 의 '값이 없음' 표기. `-` 를 빈 문자열로 접으면 '모른다' 와 '없다' 가
+#: 섞인다 — 그래서 구분해서 `None` 으로 돌려준다 (불변 규칙 2).
+ZEEK_UNSET = "-"
+ZEEK_EMPTY = "(empty)"
+
+
+def _gunzip_bounded(path: Path, max_out: int) -> bytes:
+    """`.gz` 를 **상한 안에서만** 푼다. 꼬리의 선언 크기를 믿지 않는다."""
+    import gzip
+    out = bytearray()
+    with gzip.open(path, "rb") as fh:
+        while True:
+            chunk = fh.read(1 << 20)
+            if not chunk:
+                break
+            out += chunk
+            if len(out) > max_out:
+                raise UnsafeInput(
+                    "압축을 풀면 %d바이트를 넘습니다 (상한 %d) — gzip 폭탄일 수 "
+                    "있습니다" % (len(out), max_out), path.name)
+    return bytes(out)
+
+
+def _zeek_tsv(text: str, name: str, max_rows: int):
+    """Zeek TSV. 머리글은 `#fields` 줄이 **선언한다** — 짐작하지 않는다."""
+    sep = "\t"
+    fields: Optional[List[str]] = None
+    rows: List[dict] = []
+    for line in text.splitlines():
+        if line.startswith("#"):
+            if line.startswith("#separator"):
+                raw = line.split(None, 1)[1] if " " in line else "\\x09"
+                sep = raw.encode().decode("unicode_escape") or "\t"
+            elif line.startswith("#fields"):
+                fields = line.split(sep)[1:]
+            continue
+        if not line.strip() or fields is None:
+            continue
+        if len(rows) >= max_rows:
+            raise UnsafeInput("행 수 > 상한 %d" % max_rows, name)
+        parts = line.split(sep)
+        row = {}
+        for i, key in enumerate(fields):
+            v = parts[i] if i < len(parts) else ZEEK_UNSET
+            # **`-` 는 '모른다' 다.** 빈 문자열로 접으면 '없다' 와 섞인다.
+            row[key] = None if v == ZEEK_UNSET else ("" if v == ZEEK_EMPTY else v)
+        rows.append(row)
+    if fields is None:
+        raise UnsafeInput(
+            "Zeek TSV 에 `#fields` 머리글이 없습니다 — 열 이름을 짐작하지 "
+            "않습니다. JSON 로그라면 그대로 주셔도 됩니다", name)
+    return fields, rows
+
+
+def _zeek_json(text: str, name: str, max_rows: int):
+    """Zeek JSON lines (Malcolm 기본). 한 줄에 객체 하나."""
+    fields: List[str] = []
+    rows: List[dict] = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if len(rows) >= max_rows:
+            raise UnsafeInput("행 수 > 상한 %d" % max_rows, name)
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise UnsafeInput("JSON 로그 한 줄을 읽지 못했습니다: %s" % exc, name)
+        if not isinstance(row, dict):
+            raise UnsafeInput("JSON 로그의 한 줄이 객체가 아닙니다", name)
+        for k in row:
+            if k not in fields:
+                fields.append(k)
+        rows.append(row)
+    return fields, rows
+
+
+def bounded_zeek_log(path, *, max_bytes=MAX_ZEEK_BYTES, max_rows=MAX_ZEEK_ROWS,
+                     max_uncompressed=MAX_ZEEK_UNCOMPRESSED):
+    """Zeek 로그 한 장을 한계 안에서 읽는다. `(필드, 행)` 을 돌려준다.
+
+    TSV(`#fields` 머리글)와 JSON lines 를 모두 받고 `.gz` 를 푼다 — 로테이트된
+    현장 로그가 대개 `.log.gz` 다. **열 이름을 짐작하지 않는다**: TSV 는
+    `#fields` 가 선언하고, JSON 은 키가 곧 이름이다.
+    """
+    path = Path(path)
+    size = path.stat().st_size
+    if size > max_bytes:
+        raise UnsafeInput("로그 크기 %d > 상한 %d" % (size, max_bytes), path.name)
+
+    if path.suffix == ".gz":
+        raw = _gunzip_bounded(path, max_uncompressed)
+    else:
+        raw = path.read_bytes()
+    text, _enc = _decode_table(raw, path.name)
+
+    head = text.lstrip()[:1]
+    if head == "{":
+        return _zeek_json(text, path.name, max_rows)
+    return _zeek_tsv(text, path.name, max_rows)
+
+
+# --------------------------------------------------------------------------
 # 캡처 (pcap · pcapng)
 # --------------------------------------------------------------------------
 import struct

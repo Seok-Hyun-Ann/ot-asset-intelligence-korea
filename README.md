@@ -135,12 +135,37 @@ python -m otai project --file plant.aml --advisory data/csaf --as-of 2026-09-11 
 #   Purdue 레벨·구역은 패킷에 없어 비워 두고 사람이 채웁니다.
 python -m otai capture --file line3.pcap --as-of 2026-09-11 --out out/topology.json
 
+# Zeek · ICSNPP 로그 → 관측된 토폴로지 + **관측에서 나온 장비 식별**
+#   현장에 Malcolm/Zeek 이 있으면 pcap 10분이 아니라 **며칠~몇 주치**를 읽습니다.
+#   .log · .log.gz · JSON 을 다 받고, 모르는 로그는 열 이름을 짐작하지 않고 건너뜁니다.
+python -m otai zeek --logs /opt/zeek/logs/2026-10-04 --as-of 2026-10-05 --out out/topology.json
+
 # 엑셀·CSV 자산대장 → 자산  (CP949 도 읽습니다. 머리글 행은 짐작하지 않습니다)
 python -m otai import --xlsx "자산대장.xlsx" --out out/assets --as-of 2026-09-11
 #   → 시트별 머리글 후보를 보여줍니다. 고른 뒤 --sheet 1공장:4 --save-profile 1공장
 #   → 다음 달에는 --profile 1공장 만 주면 끝입니다
 python -m otai import --csv fixtures/csv/assets-sample.csv --out out/assets --as-of 2026-09-11
 ```
+
+### 해석기를 쓰지 않고 프로토콜 15종 — CISA 가 공짜로 줍니다
+
+[ICSNPP](https://github.com/cisagov/ICSNPP)(CISA)가 Zeek 플러그인으로 **S7comm · EtherNet/IP·CIP ·
+BACnet · OPC UA · Omron FINS · GE-SRTP · HART-IP · EtherCAT · BSAP · ROC-Plus · C12.22 · Genisys ·
+Synchrophasor · Profinet IO CM** 을 해석하고 **Modbus·DNP3** 는 Zeek 코어를 확장합니다.
+`otai zeek` 이 그 로그를 읽습니다 — **센서를 만들지 않고 센서의 결과를 읽는 길**입니다.
+
+| 얻는 것 | 어디서 | 지금까지와 다른 점 |
+|---|---|---|
+| 며칠~몇 주 관측 창 | `conn.log` | pcap 10분 → 실측 7일 |
+| **제조사·제품명·제품코드·리비전·시리얼** | `cip_identity.log` | MAC OUI **추측** → **관측** |
+| 제조사·장치명 | `bacnet_discovery.log` | 동일 |
+| `firmware-revision` 등 속성 | `bacnet_property.log` | **누가 그 속성을 읽었다면** |
+| **로직 다운로드가 실제 일어났다** | `s7comm_upload_download.log` | 포트 열림 추론 → 관측 |
+| 제어 쓰기가 실제 일어났다 | `modbus` · `s7comm` · `dnp3` 함수 | 동일 |
+
+> **S7comm 에서 펌웨어·주문번호는 나오지 않습니다.** ICSNPP 의 `s7comm_read_szl.log` 는 SZL
+> **요청** 메타데이터만 남기고 응답 본문을 로깅하지 않습니다 — 기대를 먼저 접어 둡니다.
+> 그리고 **로그도 시간 창입니다**: 경로를 못 찾아도 도달성은 `아니오` 가 아니라 `미상` 입니다.
 
 ### 자산대장의 `구역` 을 그래프로 — 설비가 그래프에 없으면 전부 `P?` 입니다
 
@@ -352,7 +377,7 @@ python -m otai report --assets fixtures/assets --advisory data/csaf/cisa/2026 \
 | 문서 | 내용 |
 |---|---|
 | [`docs/SPEC_v1.0.md`](docs/SPEC_v1.0.md) | 상세 기획서 (22장 + 부록, 표 52개) — 모든 설계의 1차 근거 |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADR 50개 — 무엇을 왜 그렇게 정했고, 무엇을 기각했고, 무엇이 한계인가 |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADR 51개 — 무엇을 왜 그렇게 정했고, 무엇을 기각했고, 무엇이 한계인가 |
 | [`docs/VERIFICATION.md`](docs/VERIFICATION.md) | 검증 매트릭스 — 무엇을 어떤 근거로 검증했는가 |
 | [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md) | 비슷한 공개 도구들과의 격차 — 무엇이 없고 어떻게 붙이는가 |
 

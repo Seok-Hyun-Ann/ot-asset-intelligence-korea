@@ -289,6 +289,11 @@ def evaluate_reachability(
 #: 엣지 부재를 '없음' 으로 읽을 수 **없는** 출처. 관측 창에서 나온 것들이다.
 WINDOWED_SOURCES = ("pcap", "zeek", "flow")
 
+#: 출처마다 사람이 쓰는 말이 다르다. pcap 은 '캡처' 지만 Zeek 은 '로그' 다 —
+#: 로그를 캡처라고 부르면 현업자가 "우리는 캡처 안 떴는데" 로 읽는다.
+WINDOW_WORDS = {"pcap": ("캡처", "캡처"), "zeek": ("Zeek 로그", "로그"),
+                "flow": ("플로우 기록", "플로우")}
+
 
 def _edges_may_be_incomplete(topo: Topology) -> Optional[str]:
     """엣지 목록이 **다 있다고 볼 수 없는가.** 그렇다면 이유를 돌려준다.
@@ -309,8 +314,11 @@ def _edges_may_be_incomplete(topo: Topology) -> Optional[str]:
     if prov.get("edges_may_be_incomplete"):
         return str(prov.get("incomplete_reason")
                    or "이 토폴로지의 연결 목록은 완전하다고 선언되지 않았습니다")
-    if str(prov.get("source") or "").lower() in WINDOWED_SOURCES:
-        return "이 토폴로지는 캡처에서 나왔고 캡처는 **시간 창**입니다"
+    src = str(prov.get("source") or "").lower()
+    if src in WINDOWED_SOURCES:
+        return "이 토폴로지는 %s에서 나왔고 %s는 **시간 창**입니다" % (
+            WINDOW_WORDS.get(src, ("캡처", "캡처"))[0],
+            WINDOW_WORDS.get(src, ("캡처", "캡처"))[1])
     # 구역 선언을 덧입혔어도 엣지는 여전히 캡처에서 온 것이다 (ADR-047)
     if "window" in prov and "packets" in prov:
         return "이 토폴로지는 캡처에서 나왔고 캡처는 **시간 창**입니다"

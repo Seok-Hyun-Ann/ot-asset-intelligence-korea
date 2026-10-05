@@ -192,7 +192,7 @@ Huff 외, [*I Can't Patch My OT Systems!*](https://arxiv.org/abs/2510.06951) (20
 | ~~a~~ | ~~IP·MAC·호스트명·VLAN 을 `Asset` 에 + 캡처→자산 다리~~ → **완료 (ADR-042)** | `model.py` · `capture.py` · `csvimport.py` | — |
 | **b** | **SBOM 입력** (CycloneDX → `Component`) | 새 `otai/sbom.py`, `safeio` 경유 | 중간 |
 | **c** | **VEX 출력** (9상태 → CSAF VEX / OpenVEX) | `applicability.Decision` 에 내보내기 | 중간 |
-| **d** | **Zeek 로그 입력** (ICSNPP `*.log` → 토폴로지·프로토콜) | `capture.py` 와 같은 모양의 `otai/zeeklog.py` | 중간 |
+| ~~d~~ | ~~Zeek 로그 입력~~ → **완료 (ADR-051).** ICSNPP 로그 8종을 읽고 `cip_identity`·`bacnet_discovery` 에서 **관측 식별**을 얻는다. 남은 로그 8종은 열 이름을 확인하면 한 줄씩 더하는 일 | `otai/zeeklog.py` | — |
 | **e** | **SSVC 설명 축** | `priority.py` 에 병기 (대체 아님) | 작음 |
 | ~~f~~ | ~~통제 항목 매핑~~ → **KISA 제어시스템(ADR-043) + NIST 800-82r3 OT Overlay(ADR-044) 완료.** 62443-3-3 · CSF · NERC CIP 는 남음. **화면 연결은 (h)** | `data/controls/` · `otai/controls.py` | — |
 | **g** | **D3FEND 어휘**를 차단 후보에 | `paths.py` · `terms.ts` | 중간 |

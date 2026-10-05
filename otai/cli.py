@@ -265,6 +265,106 @@ def _cmd_bundle_rollback(args) -> int:
     return 0 if res.ok else 1
 
 
+def _cmd_zeek(args) -> int:
+    """Zeek / ICSNPP 로그에서 토폴로지와 관측 식별을 만든다 (ADR-051).
+
+    **장비에 접속하지 않는다.** 이미 떠 있는 센서가 남긴 로그를 읽을 뿐이다.
+    """
+    from .zeeklog import identity_proposals, scan_logs, to_topology
+
+    scan = scan_logs(args.logs)
+    doc = to_topology(scan)
+    if args.zones:
+        from .zonemap import apply_zonemap, load_zonemap
+        zres = apply_zonemap(doc, load_zonemap(args.zones))
+        sys.stdout.write("구역 선언 — %d대에 레벨·구역을 채웠습니다 "
+                         "(**선언은 관측이 아닙니다**)\n" % zres.declared)
+
+    sys.stdout.write("Zeek 로그 — %s\n" % (args.logs if isinstance(args.logs, (str, Path))
+                                          else ", ".join(str(p) for p in args.logs)))
+    for name, n in sorted(scan.logs_read.items()):
+        sys.stdout.write("  %-26s %8d행\n" % (name + ".log", n))
+    if scan.skipped_logs:
+        sys.stdout.write("  읽지 않은 로그 %d개 — 열 이름을 짐작하지 않습니다: %s%s\n"
+                         % (len(scan.skipped_logs),
+                            ", ".join(scan.skipped_logs[:5]),
+                            " 외" if len(scan.skipped_logs) > 5 else ""))
+    w0, w1 = scan.window
+    sys.stdout.write("  관측 창 %s ~ %s\n" % (w0 or "미상", w1 or "미상"))
+    for k, v in sorted(scan.counters.items()):
+        sys.stdout.write("  %s: %d\n" % (k, v))
+
+    sys.stdout.write("\n장비 %d대 · 통신 %d개\n"
+                     % (len(doc["nodes"]), len(doc["edges"])))
+    for n in doc["nodes"][:30]:
+        ev = n.get("evidence") or {}
+        bits = []
+        if ev.get("identity_vendor") or ev.get("identity_product"):
+            bits.append("%s %s" % (ev.get("identity_vendor") or "",
+                                   ev.get("identity_product") or ""))
+        if ev.get("identity_revision"):
+            bits.append("리비전 %s" % ev["identity_revision"])
+        if ev.get("type_hint"):
+            bits.append("%s 인 듯 — %s" % (ev["type_hint"], ev["type_hint_reason"]))
+        sys.stdout.write("  %-16s %s\n" % (n["node_id"], " · ".join(bits).strip()))
+
+    if scan.identities:
+        sys.stdout.write("\n관측에서 나온 식별 %d건 — **MAC OUI 추측과 다른 급입니다**\n"
+                         % len(scan.identities))
+        for ip, i in sorted(scan.identities.items()):
+            sys.stdout.write("  %-16s %s\n" % (ip, " · ".join(filter(None, [
+                i.vendor, i.product,
+                "코드 %s" % i.product_code if i.product_code else None,
+                "리비전 %s" % i.revision if i.revision else None,
+                "S/N %s" % i.serial if i.serial else None,
+                "식별 수준 힌트 %s" % i.level_hint, "출처 %s.log" % i.source_log]))))
+        sys.stdout.write("  **자산을 새로 만들지 않습니다** — 토폴로지가 그 IP 를 "
+                         "자산으로 선언했을 때만 붙일 후보로 올립니다 (ADR-042).\n")
+
+    if scan.control_events:
+        sys.stdout.write("\n관측된 제어 행위 %d건 — 포트가 열렸다는 추론이 아니라 "
+                         "**일어난 일**입니다\n" % len(scan.control_events))
+        for c in scan.control_events[:15]:
+            sys.stdout.write("  [%s] %s → %s  %s\n"
+                             % (c.kind, c.src, c.dst, c.detail))
+        if len(scan.control_events) > 15:
+            sys.stdout.write("  … 외 %d건\n" % (len(scan.control_events) - 15))
+
+    sys.stdout.write("\n**로그도 시간 창입니다.** 여기 없는 경로가 없다는 뜻이 "
+                     "아니고,\n도달성은 FALSE 가 아니라 미상으로 남습니다 "
+                     "(ADR-048).\n")
+    need = [n["node_id"] for n in doc["nodes"] if n["purdue_level"] is None]
+    if need and not args.zones:
+        sys.stdout.write("\n다음에 할 일 — %d대의 Purdue 레벨·구역을 채워 주세요 "
+                         "(`--zones`).\n" % len(need))
+
+    if args.assets:
+        from .topology import load_topology as _lt
+        props, unlinked = identity_proposals(scan, _lt(args.assets))
+        sys.stdout.write("\n자산에 붙일 식별 후보 — 토폴로지가 선언한 것만\n")
+        for p in props:
+            sys.stdout.write("  %s ← %s  %s %s\n"
+                             % (p["asset_id"], p["ip"], p["vendor"] or "",
+                                p["product"] or ""))
+        if unlinked:
+            sys.stdout.write("  어느 자산인지 모르는 IP %d개 — 토폴로지에 "
+                             "asset_id 를 선언하면 붙습니다\n" % len(unlinked))
+
+    if args.out:
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(doc, ensure_ascii=False, indent=1,
+                                  sort_keys=True) + "\n", encoding="utf-8")
+        sys.stdout.write("\n토폴로지 작성: %s\n" % out)
+    _audit(args, "zeek_logs_read",
+           subject=str(args.out or args.logs),
+           detail={"logs": dict(sorted(scan.logs_read.items())),
+                   "rows": scan.rows, "window": list(scan.window),
+                   "identities": len(scan.identities),
+                   "control_events": len(scan.control_events)})
+    return 0
+
+
 def _cmd_topology(args) -> int:
     """자산대장의 `구역` 으로 토폴로지 골격을 만든다 (ADR-050).
 
@@ -1239,6 +1339,18 @@ def build_parser() -> argparse.ArgumentParser:
     br.add_argument("--to", required=True)
     br.add_argument("--as-of", required=True, dest="as_of")
     br.set_defaults(func=_cmd_bundle_rollback)
+
+    zk = _audited(sub.add_parser(
+        "zeek", help="Zeek·ICSNPP 로그에서 토폴로지와 관측 식별 (장비 접속 안 함)"))
+    zk.add_argument("--logs", required=True, nargs="+", type=Path,
+                    help="Zeek 로그 디렉터리 또는 파일 (.log · .log.gz · JSON)")
+    zk.add_argument("--zones", type=Path, default=None,
+                    help="구역 선언 — 레벨·구역·진입점을 사람이 적은 것")
+    zk.add_argument("--assets", type=Path, default=None,
+                    help="자산을 선언한 토폴로지. 주면 관측 식별을 그 자산에 제안한다")
+    zk.add_argument("--out", type=Path, default=None, help="토폴로지 JSON 출력 경로")
+    zk.add_argument("--as-of", required=True, dest="as_of")
+    zk.set_defaults(func=_cmd_zeek)
 
     tp = _audited(sub.add_parser(
         "topology", help="자산대장의 구역으로 토폴로지 골격 만들기"))
