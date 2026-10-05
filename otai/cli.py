@@ -265,6 +265,92 @@ def _cmd_bundle_rollback(args) -> int:
     return 0 if res.ok else 1
 
 
+def _cmd_topology(args) -> int:
+    """자산대장의 `구역` 으로 토폴로지 골격을 만든다 (ADR-050).
+
+    **노드가 생기게 하는 것**이 목적이다. 자산이 그래프에 없으면 H01~H03 이
+    "이 자산이 토폴로지에 없습니다" 로 막혀 전부 `P?` 가 된다.
+    """
+    from .site import from_assets, load_site, template
+
+    bodies = []
+    for pattern in args.assets:
+        p = Path(pattern)
+        for q in (sorted(p.glob("*.json")) if p.is_dir() else [p]):
+            bodies.append(bounded_json_load(q))
+    if not bodies:
+        sys.stderr.write("자산 파일을 찾지 못했습니다: %s\n" % args.assets)
+        return 2
+
+    if args.site_template:
+        Path(args.site_template).write_text(
+            json.dumps(template(bodies), ensure_ascii=False, indent=1) + "\n",
+            encoding="utf-8")
+        sys.stdout.write(
+            "사이트 프로파일 서식: %s\n"
+            "  구역마다 Purdue 레벨·안전 중요도를 적고, 아는 연결을 conduits 에 "
+            "넣은 뒤\n  `--site` 로 주세요.\n" % args.site_template)
+        if not args.site:
+            return 0
+
+    if not args.site:
+        sys.stderr.write(
+            "--site 가 필요합니다. 먼저 `--site-template site.json` 으로 서식을 "
+            "받아 채워 주세요.\n")
+        return 2
+
+    site = load_site(args.site)
+    doc, res = from_assets(bodies, site)
+
+    sys.stdout.write("토폴로지 골격 — 사이트 '%s'\n" % site.name)
+    sys.stdout.write("  자산 %d대를 구역 %d개에 넣었습니다 · 구역 간 연결 %d개\n"
+                     % (res.assets_placed, len(res.zones_used),
+                        sum(1 for e in doc["edges"]
+                            if e["src"].startswith("zone:")
+                            and e["dst"].startswith("zone:"))))
+    entries = [n["node_id"] for n in doc["nodes"] if n.get("is_entry_point")]
+    if entries:
+        sys.stdout.write("  진입점 %d개: %s\n"
+                         % (len(entries), ", ".join(entries[:4])))
+    else:
+        sys.stdout.write("  **진입점이 없습니다** — 도달성은 미상으로 남습니다. "
+                         "'닿지 않는다' 가 아닙니다 (ADR-045).\n")
+
+    sys.stdout.write("\n  만들어진 엣지는 `inferred`·`unknown` 입니다 — "
+                     "**관측이 아닙니다.**\n"
+                     "  그래서 이 골격만으로 도달성이 확정되지 않습니다. 눈으로 "
+                     "확인한 구간을\n  사이트 프로파일에서 \"status\": "
+                     "\"observed\" 로 올려 주세요.\n")
+
+    if res.undeclared_zones:
+        sys.stdout.write("\n선언되지 않은 구역 — 이 설비는 그래프에 넣지 "
+                         "않았습니다\n")
+        for name, n in sorted(res.undeclared_zones.items(), key=lambda kv: -kv[1]):
+            sys.stdout.write("    %s  설비 %d대\n" % (name, n))
+        sys.stdout.write("  프로파일의 zones 에 추가해 주세요.\n")
+    if res.without_zone:
+        sys.stdout.write("\n구역이 비어 있는 설비 %d대 — 대장의 '구역' 열을 "
+                         "채워 주세요\n" % len(res.without_zone))
+        for aid in res.without_zone[:10]:
+            sys.stdout.write("    %s\n" % aid)
+    if res.levels_missing:
+        sys.stdout.write("\nPurdue 레벨이 비어 있는 구역: %s\n"
+                         "  레벨이 미상이면 H03(외부 상위 Zone)이 발화하지 "
+                         "않습니다.\n" % ", ".join(res.levels_missing))
+
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(doc, ensure_ascii=False, indent=1, sort_keys=True)
+                   + "\n", encoding="utf-8")
+    sys.stdout.write("\n토폴로지 작성: %s  (노드 %d · 엣지 %d)\n"
+                     % (out, len(doc["nodes"]), len(doc["edges"])))
+    _audit(args, "topology_built", subject=str(out),
+           detail={"site": site.name, "site_sha256": site.sha256,
+                   "assets": res.assets_placed, "zones": len(res.zones_used),
+                   "undeclared_zones": sorted(res.undeclared_zones)})
+    return 0
+
+
 def _cmd_report(args) -> int:
     """보고서를 낸다 — 엑셀 · 인쇄용 HTML · CSV (ADR-049).
 
@@ -1153,6 +1239,19 @@ def build_parser() -> argparse.ArgumentParser:
     br.add_argument("--to", required=True)
     br.add_argument("--as-of", required=True, dest="as_of")
     br.set_defaults(func=_cmd_bundle_rollback)
+
+    tp = _audited(sub.add_parser(
+        "topology", help="자산대장의 구역으로 토폴로지 골격 만들기"))
+    tp.add_argument("--assets", required=True, nargs="+", type=Path,
+                    help="자산 JSON 파일 또는 디렉터리")
+    tp.add_argument("--site", type=Path, default=None,
+                    help="사이트 프로파일 — 구역의 레벨·안전 중요도·구역 간 연결")
+    tp.add_argument("--site-template", type=Path, default=None,
+                    dest="site_template",
+                    help="대장에 보이는 구역으로 빈 서식을 만든다 (값은 비워 둔다)")
+    tp.add_argument("--out", type=Path, default=Path("out/topology.json"))
+    tp.add_argument("--as-of", required=True, dest="as_of")
+    tp.set_defaults(func=_cmd_topology)
 
     rp = _audited(sub.add_parser(
         "report", help="보고서 — 엑셀·인쇄용 HTML·CSV (확장자로 고릅니다)"))

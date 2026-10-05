@@ -135,9 +135,35 @@ python -m otai project --file plant.aml --advisory data/csaf --as-of 2026-09-11 
 #   Purdue 레벨·구역은 패킷에 없어 비워 두고 사람이 채웁니다.
 python -m otai capture --file line3.pcap --as-of 2026-09-11 --out out/topology.json
 
-# CSV → 자산
+# 엑셀·CSV 자산대장 → 자산  (CP949 도 읽습니다. 머리글 행은 짐작하지 않습니다)
+python -m otai import --xlsx "자산대장.xlsx" --out out/assets --as-of 2026-09-11
+#   → 시트별 머리글 후보를 보여줍니다. 고른 뒤 --sheet 1공장:4 --save-profile 1공장
+#   → 다음 달에는 --profile 1공장 만 주면 끝입니다
 python -m otai import --csv fixtures/csv/assets-sample.csv --out out/assets --as-of 2026-09-11
 ```
+
+### 자산대장의 `구역` 을 그래프로 — 설비가 그래프에 없으면 전부 `P?` 입니다
+
+```bash
+python -m otai topology --assets out/assets --site-template site.json --as-of 2026-09-11
+#   → 대장에 보이는 구역을 설비 수와 함께 나열합니다. Purdue 레벨은 **비워 둡니다**
+python -m otai topology --assets out/assets --site site.json --out out/topology.json \
+  --as-of 2026-09-11
+```
+
+**골격만으로는 아무것도 확정되지 않습니다.** 만들어지는 엣지는 `inferred`·`unknown`
+이고, 확정까지 가려면 사람이 **둘 다** 선언해야 합니다 — 구역 사이는
+`conduits[].status: "observed"`, 구역 안쪽은 `zones[].internal_reachability:
+"flat_observed"`("이 구역은 평평하고 안쪽끼리 닿는 것을 확인했다").
+
+실측(자산 12대): 골격만으로는 `P?` 가 **4 → 4** 로 그대로입니다. 줄어드는 것은
+*'왜 막혔는지 모른다'* 쪽입니다 — 이유가 "이 자산이 토폴로지에 없습니다" 에서
+**"이 구간이 미확인입니다" + 막는 엣지 이름**으로 바뀝니다. 사람이 둘 다 확인하면
+그때 `P?` 가 **4 → 2** 로 줄고 `P0` 가 뜹니다.
+
+연결을 적지 않은 것은 **'격리됐다' 가 아닙니다.** 사람이
+`site.conduits_complete: true` 로 *"연결을 전부 열거했다"* 를 책임질 때만 도달성이
+`아니오` 가 될 수 있습니다 ([ADR-050](docs/DECISIONS.md)).
 
 ### 장치 하나를 직접 넣어보기
 
@@ -326,7 +352,7 @@ python -m otai report --assets fixtures/assets --advisory data/csaf/cisa/2026 \
 | 문서 | 내용 |
 |---|---|
 | [`docs/SPEC_v1.0.md`](docs/SPEC_v1.0.md) | 상세 기획서 (22장 + 부록, 표 52개) — 모든 설계의 1차 근거 |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADR 49개 — 무엇을 왜 그렇게 정했고, 무엇을 기각했고, 무엇이 한계인가 |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADR 50개 — 무엇을 왜 그렇게 정했고, 무엇을 기각했고, 무엇이 한계인가 |
 | [`docs/VERIFICATION.md`](docs/VERIFICATION.md) | 검증 매트릭스 — 무엇을 어떤 근거로 검증했는가 |
 | [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md) | 비슷한 공개 도구들과의 격차 — 무엇이 없고 어떻게 붙이는가 |
 

@@ -273,12 +273,12 @@ def evaluate_reachability(
     # 캡처는 시간 창이고, 그 창에 안 쓰인 경로는 그냥 안 보였을 뿐이다. 여기서
     # FALSE 를 말하면 공장에 대해 '닿지 않는다' 고 단정하는 것이다 — 실제 공개
     # 캡처(4SICS 2015, 7시간)를 넣었을 때 바로 이 자리가 FALSE 를 냈다 (ADR-048).
-    if _observation_window(topo):
+    incomplete = _edges_may_be_incomplete(topo)
+    if incomplete:
         return Reachability(
             Tri.UNKNOWN, (), (), (),
-            "이 토폴로지는 캡처에서 나왔고 캡처는 **시간 창**입니다 — 그 창에서 "
-            "닿는 길을 보지 못했을 뿐이고, 경로가 없다는 뜻이 아닙니다. 확정하려면 "
-            "구역 간 연결을 사람이 선언해야 합니다",
+            "%s — 닿는 길을 보지 못했을 뿐이고 **경로가 없다는 뜻이 아닙니다.**"
+            % incomplete,
         )
     return Reachability(
         Tri.FALSE, (), (), (),
@@ -290,17 +290,31 @@ def evaluate_reachability(
 WINDOWED_SOURCES = ("pcap", "zeek", "flow")
 
 
-def _observation_window(topo: Topology) -> bool:
-    """이 토폴로지가 '본 것만' 담고 있는가.
+def _edges_may_be_incomplete(topo: Topology) -> Optional[str]:
+    """엣지 목록이 **다 있다고 볼 수 없는가.** 그렇다면 이유를 돌려준다.
 
-    `provenance.source` 가 캡처류면 그렇다. 손으로 선언한 토폴로지는 "여기 없는
-    연결은 없다" 를 사람이 책임지고 말한 것이므로 FALSE 를 낼 수 있다.
+    엣지가 없다는 사실의 뜻이 출처마다 다르다 (ADR-048/050):
+
+    | 출처 | 엣지 0개의 뜻 |
+    |---|---|
+    | 손으로 쓴 토폴로지 | 사람이 "여기 없는 연결은 없다" 를 책임졌다 → `FALSE` 가능 |
+    | 캡처(pcap·zeek·flow) | **그 시간 창에 안 보였다** → 미상 |
+    | 사이트 프로파일 골격 | 사람이 **아는 연결만** 적었다 → 미상 |
+
+    세 번째를 빠뜨리면, 구역 간 연결을 모르는 채 골격을 만든 사람에게 도구가
+    '닿지 않는다' 고 말한다 — 서식에 "비워 두면 격리된 것처럼 보이지만 격리됐다는
+    뜻이 아닙니다" 라고 적어 둔 바로 그 오독이다. 실측에서 잡았다.
     """
     prov = topo.provenance or {}
+    if prov.get("edges_may_be_incomplete"):
+        return str(prov.get("incomplete_reason")
+                   or "이 토폴로지의 연결 목록은 완전하다고 선언되지 않았습니다")
     if str(prov.get("source") or "").lower() in WINDOWED_SOURCES:
-        return True
+        return "이 토폴로지는 캡처에서 나왔고 캡처는 **시간 창**입니다"
     # 구역 선언을 덧입혔어도 엣지는 여전히 캡처에서 온 것이다 (ADR-047)
-    return "window" in prov and "packets" in prov
+    if "window" in prov and "packets" in prov:
+        return "이 토폴로지는 캡처에서 나왔고 캡처는 **시간 창**입니다"
+    return None
 
 
 # --------------------------------------------------------------------------
