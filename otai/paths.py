@@ -269,10 +269,38 @@ def evaluate_reachability(
             "벡터에서만 도출하고, 없는 능력을 지어내지 않습니다 (R06)"
             % (unfiltered, require_capability),
         )
+    # **캡처에서 나온 토폴로지에 없는 엣지는 '없는 엣지' 가 아니다** (ADR-039).
+    # 캡처는 시간 창이고, 그 창에 안 쓰인 경로는 그냥 안 보였을 뿐이다. 여기서
+    # FALSE 를 말하면 공장에 대해 '닿지 않는다' 고 단정하는 것이다 — 실제 공개
+    # 캡처(4SICS 2015, 7시간)를 넣었을 때 바로 이 자리가 FALSE 를 냈다 (ADR-048).
+    if _observation_window(topo):
+        return Reachability(
+            Tri.UNKNOWN, (), (), (),
+            "이 토폴로지는 캡처에서 나왔고 캡처는 **시간 창**입니다 — 그 창에서 "
+            "닿는 길을 보지 못했을 뿐이고, 경로가 없다는 뜻이 아닙니다. 확정하려면 "
+            "구역 간 연결을 사람이 선언해야 합니다",
+        )
     return Reachability(
         Tri.FALSE, (), (), (),
         "토폴로지상 진입점에서 도달하는 경로가 없습니다",
     )
+
+
+#: 엣지 부재를 '없음' 으로 읽을 수 **없는** 출처. 관측 창에서 나온 것들이다.
+WINDOWED_SOURCES = ("pcap", "zeek", "flow")
+
+
+def _observation_window(topo: Topology) -> bool:
+    """이 토폴로지가 '본 것만' 담고 있는가.
+
+    `provenance.source` 가 캡처류면 그렇다. 손으로 선언한 토폴로지는 "여기 없는
+    연결은 없다" 를 사람이 책임지고 말한 것이므로 FALSE 를 낼 수 있다.
+    """
+    prov = topo.provenance or {}
+    if str(prov.get("source") or "").lower() in WINDOWED_SOURCES:
+        return True
+    # 구역 선언을 덧입혔어도 엣지는 여전히 캡처에서 온 것이다 (ADR-047)
+    return "window" in prov and "packets" in prov
 
 
 # --------------------------------------------------------------------------

@@ -344,9 +344,22 @@ def _cmd_capture(args) -> int:
     Purdue 레벨과 구역은 패킷에 없어 비워 두고, 사람이 채워야 한다.
     """
     from .capture import address_proposals, merge_address, scan_capture, to_topology
+    from .zonemap import apply_zonemap, load_zonemap, template
 
     scan = scan_capture(args.file)
     doc = to_topology(scan)
+
+    # 구역 선언을 적용한다. **선언은 관측이 아니다** — 누가 적었는지 증거에 남는다.
+    zres = None
+    if args.zones:
+        zres = apply_zonemap(doc, load_zonemap(args.zones))
+
+    if args.zones_template:
+        Path(args.zones_template).write_text(
+            json.dumps(template(doc), ensure_ascii=False, indent=1) + "\n",
+            encoding="utf-8")
+        sys.stdout.write("구역 선언 서식: %s — zone 과 purdue_level 을 채워 "
+                         "`--zones` 로 주세요\n" % args.zones_template)
 
     sys.stdout.write("캡처 — %s\n" % args.file)
     sys.stdout.write("  원문 해시 %s\n" % scan.sha256)
@@ -393,11 +406,26 @@ def _cmd_capture(args) -> int:
 
     # 무엇을 채워야 하는지 **이름을 대서** 말한다. '사용자가 채운다' 만 쓰고
     # 목록을 안 주면 채울 방법이 없다.
+    if zres is not None:
+        sys.stdout.write("\n구역 선언 — %s\n" % args.zones)
+        sys.stdout.write("  %d대에 레벨·구역을 채웠습니다" % zres.declared)
+        if zres.entry_points:
+            sys.stdout.write(" · 진입점 %d개 (%s)"
+                             % (len(zres.entry_points),
+                                ", ".join(zres.entry_points[:4])))
+        sys.stdout.write("\n  **선언한 값은 관측이 아닙니다** — 통신(엣지)만 캡처에서\n"
+                         "  본 것이고, 레벨·구역은 사람이 적은 값으로 증거에 남습니다.\n")
+        if not zres.entry_points:
+            sys.stdout.write("  진입점이 하나도 선언되지 않았습니다 — 도달성은 "
+                             "**미상**으로 남습니다.\n  '닿지 않는다' 가 아닙니다 "
+                             "(ADR-045).\n")
+
     need = [n["node_id"] for n in doc["nodes"] if n["purdue_level"] is None]
     if need:
         sys.stdout.write(
             "\n다음에 할 일 — 아래 %d대의 **Purdue 레벨과 구역**을 채워 주세요.\n"
             "  채우기 전에는 도달성이 확정되지 않고 H01~H03 이 발화하지 않습니다.\n"
+            "  `--zones-template z.json` 으로 서식을 받아 채운 뒤 `--zones z.json`.\n"
             % len(need))
         for nid in need[:20]:
             sys.stdout.write("    %s\n" % nid)
@@ -1059,6 +1087,11 @@ def build_parser() -> argparse.ArgumentParser:
     cap.add_argument("--assets", type=Path, default=None, help="자산 JSON 디렉터리")
     cap.add_argument("--apply-addresses", action="store_true", dest="apply_addresses",
                      help="제안한 주소를 자산 파일에 실제로 더한다 (기본은 dry-run)")
+    cap.add_argument("--zones", type=Path, default=None,
+                     help="구역 선언 파일 — Purdue 레벨·구역·진입점을 사람이 적은 것")
+    cap.add_argument("--zones-template", type=Path, default=None,
+                     dest="zones_template",
+                     help="보이는 대역으로 빈 선언 서식을 만든다 (값은 비워 둔다)")
     cap.add_argument("--as-of", required=True, dest="as_of")
     cap.set_defaults(func=_cmd_capture)
 

@@ -61,3 +61,10 @@ data/standards/
 # 회사별 자산대장 매핑 프로파일 (ADR-046). 사용자 데이터이고 사내
 # 설비대장의 열 이름이 그대로 들어가므로 커밋하지 않는다.
 data/import-profiles/
+
+# 공개 ICS 캡처 (ADR-048). 우리 저작물이 아니고 25~200MB 다 —
+# Siemens 권고문과 같은 취급. `scripts/fetch_pcap.py` 로 다시 받는다.
+# 파생한 토폴로지(fixtures/topology/4sics-*.json)는 커밋한다.
+data/pcap/
+*.pcap
+*.pcapng

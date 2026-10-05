@@ -275,8 +275,9 @@ python -m otai controls \
 
 - **정확도를 주장하는 것** — 적용성 판정과 적대적 입력 거부. 정답이 외부에서 객관적으로 주어집니다
   (권고문에서 파생 / "거부되어야 한다" 는 논쟁 여지 없음).
-- **주장하지 않는 것** — 우선순위와 경로 탐지의 정확도. 전문가 합의 골드셋이 없고 토폴로지가 100% 합성이기
-  때문입니다. 자산도 전부 합성이며 화면이 그 사실을 계속 알립니다.
+- **주장하지 않는 것** — 우선순위와 경로 탐지의 정확도. **정답 집합이 없기** 때문입니다 — 전문가 합의
+  골드셋이 없고, 실제 트래픽에서 나온 토폴로지([4SICS 2015](#데이터-출처))는 공장이 아니라 컨퍼런스
+  시연 랩입니다. "그때 실제로 어떤 경로가 존재했는가" 를 아는 사람이 없으면 재현율을 계산할 대상이 없습니다. 자산도 전부 합성이며 화면이 그 사실을 계속 알립니다.
 
 알려진 한계: 인증·RBAC 미구현(로컬 전용) · NVD·EPSS 의도적 미구현 · 프로토콜 식별 대화(CIP·S7) 미해석 ·
 실제 현장 데이터로 검증하지 못함.
@@ -291,6 +292,7 @@ python -m otai controls \
 | [ATT&CK for ICS](https://github.com/mitre-attack/attack-stix-data) | 기법 분류 (v19.2 고정) | ✗ 4MB |
 | [NIST SP 800-82r3](https://doi.org/10.6028/NIST.SP.800-82r3) | OT Overlay 통제 매핑 | 매핑 표만 — 원문 PDF 는 공개 URL 에서 받습니다 |
 | [KISA 상세가이드 2026](https://www.krcert.or.kr/) | 제어시스템 점검항목 매핑 | 매핑 표만 — 원문은 재배포 금지 |
+| [4SICS 2015 ICS 랩 캡처](https://www.netresec.com/?page=PCAP4SICS) | **실제 ICS 트래픽** → 관측 토폴로지 | 파생 토폴로지만 — pcap 은 `scripts/fetch_pcap.py` 로 받습니다 |
 
 `scripts/fetch_advisories.py` 가 전부 받아옵니다. 토폴로지는 **합성**이며 Purdue + IEC 62443 구조를 따릅니다.
 
@@ -299,7 +301,7 @@ python -m otai controls \
 | 문서 | 내용 |
 |---|---|
 | [`docs/SPEC_v1.0.md`](docs/SPEC_v1.0.md) | 상세 기획서 (22장 + 부록, 표 52개) — 모든 설계의 1차 근거 |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADR 45개 — 무엇을 왜 그렇게 정했고, 무엇을 기각했고, 무엇이 한계인가 |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADR 48개 — 무엇을 왜 그렇게 정했고, 무엇을 기각했고, 무엇이 한계인가 |
 | [`docs/VERIFICATION.md`](docs/VERIFICATION.md) | 검증 매트릭스 — 무엇을 어떤 근거로 검증했는가 |
 | [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md) | 비슷한 공개 도구들과의 격차 — 무엇이 없고 어떻게 붙이는가 |
 

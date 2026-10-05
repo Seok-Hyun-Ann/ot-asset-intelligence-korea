@@ -1,0 +1,472 @@
+{
+ "edges": [
+  {
+   "dst": "10.10.10.30",
+   "edge_type": "can_reach",
+   "evidence": {
+    "bytes": 420,
+    "direction_known": false,
+    "first_seen": "2015-10-20T16:32:14Z",
+    "last_seen": "2015-10-20T16:32:20Z",
+    "packets": 7,
+    "pcap_sha256": "8c6ee02dc26b1b5298a7c9b4dc83cc779bd2a3219d5c5cbc51e3d4d325763bc2",
+    "return_packets": null,
+    "source": "pcap",
+    "sport_protocol": "s7comm",
+    "transport": "tcp",
+    "vlans": null
+   },
+   "port": 54530,
+   "protocol": null,
+   "src": "10.10.10.10",
+   "status": "observed"
+  },
+  {
+   "dst": "10.10.10.30",
+   "edge_type": "can_reach",
+   "evidence": {
+    "bytes": 420,
+    "direction_known": false,
+    "first_seen": "2015-10-20T16:32:15Z",
+    "last_seen": "2015-10-20T16:32:21Z",
+    "packets": 7,
+    "pcap_sha256": "8c6ee02dc26b1b5298a7c9b4dc83cc779bd2a3219d5c5cbc51e3d4d325763bc2",
+    "return_packets": null,
+    "source": "pcap",
+    "sport_protocol": "s7comm",
+    "transport": "tcp",
+    "vlans": null
+   },
+   "port": 54531,
+   "protocol": null,
+   "src": "10.10.10.10",
+   "status": "observed"
+  },
+  {
+   "dst": "10.10.10.10",
+   "edge_type": "can_reach",
+   "evidence": {
+    "bytes": 15276785,
+    "direction_known": false,
+    "first_seen": "2015-10-20T15:25:31Z",
+    "last_seen": "2015-10-20T22:10:31Z",
+    "packets": 94859,
+    "pcap_sha256": "8c6ee02dc26b1b5298a7c9b4dc83cc779bd2a3219d5c5cbc51e3d4d325763bc2",
+    "return_packets": 51470,
+    "source": "pcap",
+    "sport_protocol": null,
+    "transport": "tcp",
+    "vlans": null
+   },
+   "port": 102,
+   "protocol": "s7comm",
+   "src": "10.10.10.20",
+   "status": "observed"
+  },
+  {
+   "dst": "10.10.10.10",
+   "edge_type": "can_reach",
+   "evidence": {
+    "bytes": 3799874,
+    "direction_known": true,
+    "first_seen": "2015-10-20T15:25:31Z",
+    "last_seen": "2015-10-20T17:35:40Z",
+    "packets": 29476,
+    "pcap_sha256": "8c6ee02dc26b1b5298a7c9b4dc83cc779bd2a3219d5c5cbc51e3d4d325763bc2",
+    "return_packets": 33121,
+    "source": "pcap",
+    "sport_protocol": null,
+    "transport": "tcp",
+    "vlans": null
+   },
+   "port": 102,
+   "protocol": "s7comm",
+   "src": "10.10.10.30",
+   "status": "observed"
+  },
+  {
+   "dst": "192.168.88.1",
+   "edge_type": "can_reach",
+   "evidence": {
+    "bytes": 13156,
+    "direction_known": false,
+    "first_seen": "2015-10-20T15:34:03Z",
+    "last_seen": "2015-10-20T18:32:42Z",
+    "packets": 77,
+    "pcap_sha256": "8c6ee02dc26b1b5298a7c9b4dc83cc779bd2a3219d5c5cbc51e3d4d325763bc2",
+    "return_packets": 77,
+    "source": "pcap",
+    "sport_protocol": null,
+    "transport": "udp",
+    "vlans": null
+   },
+   "port": 53,
+   "protocol": "dns",
+   "src": "192.168.88.52",
+   "status": "observed"
+  },
+  {
+   "dst": "192.168.88.1",
+   "edge_type": "can_reach",
+   "evidence": {
+    "bytes": 1920,
+    "direction_known": false,
+    "first_seen": "2015-10-20T15:34:36Z",
+    "last_seen": "2015-10-20T18:32:25Z",
+    "packets": 32,
+    "pcap_sha256": "8c6ee02dc26b1b5298a7c9b4dc83cc779bd2a3219d5c5cbc51e3d4d325763bc2",
+    "return_packets": null,
+    "source": "pcap",
+    "sport_protocol": null,
+    "transport": "udp",
+    "vlans": null
+   },
+   "port": 192,
+   "protocol": null,
+   "src": "192.168.88.52",
+   "status": "observed"
+  },
+  {
+   "dst": "192.195.142.13",
+   "edge_type": "can_reach",
+   "evidence": {
+    "bytes": 420,
+    "direction_known": false,
+    "first_seen": "2015-10-20T18:31:50Z",
+    "last_seen": "2015-10-20T18:32:21Z",
+    "packets": 5,
+    "pcap_sha256": "8c6ee02dc26b1b5298a7c9b4dc83cc779bd2a3219d5c5cbc51e3d4d325763bc2",
+    "return_packets": null,
+    "source": "pcap",
+    "sport_protocol": null,
+    "transport": "udp",
+    "vlans": null
+   },
+   "port": 1194,
+   "protocol": null,
+   "src": "192.168.88.52",
+   "status": "observed"
+  },
+  {
+   "dst": "192.168.88.1",
+   "edge_type": "can_reach",
+   "evidence": {
+    "bytes": 1800253,
+    "direction_known": false,
+    "first_seen": "2015-10-20T15:10:34Z",
+    "last_seen": "2015-10-20T22:10:32Z",
+    "packets": 12331,
+    "pcap_sha256": "8c6ee02dc26b1b5298a7c9b4dc83cc779bd2a3219d5c5cbc51e3d4d325763bc2",
+    "return_packets": 12330,
+    "source": "pcap",
+    "sport_protocol": null,
+    "transport": "udp",
+    "vlans": null
+   },
+   "port": 53,
+   "protocol": "dns",
+   "src": "192.168.88.61",
+   "status": "observed"
+  },
+  {
+   "dst": "17.253.34.253",
+   "edge_type": "can_reach",
+   "evidence": {
+    "bytes": 360,
+    "direction_known": false,
+    "first_seen": "2015-10-20T15:34:03Z",
+    "last_seen": "2015-10-20T18:30:39Z",
+    "packets": 4,
+    "pcap_sha256": "8c6ee02dc26b1b5298a7c9b4dc83cc779bd2a3219d5c5cbc51e3d4d325763bc2",
+    "return_packets": null,
+    "source": "pcap",
+    "sport_protocol": "ntp",
+    "transport": "udp",
+    "vlans": null
+   },
+   "port": 123,
+   "protocol": "ntp",
+   "src": "192.168.89.2",
+   "status": "observed"
+  },
+  {
+   "dst": "8.8.8.8",
+   "edge_type": "can_reach",
+   "evidence": {
+    "bytes": 189669,
+    "direction_known": false,
+    "first_seen": "2015-10-20T15:10:42Z",
+    "last_seen": "2015-10-20T22:10:28Z",
+    "packets": 2731,
+    "pcap_sha256": "8c6ee02dc26b1b5298a7c9b4dc83cc779bd2a3219d5c5cbc51e3d4d325763bc2",
+    "return_packets": null,
+    "source": "pcap",
+    "sport_protocol": null,
+    "transport": "udp",
+    "vlans": null
+   },
+   "port": 53,
+   "protocol": "dns",
+   "src": "192.168.89.2",
+   "status": "observed"
+  }
+ ],
+ "nodes": [
+  {
+   "evidence": {
+    "declared_by": "zonemap",
+    "declared_fields": [
+     "zone",
+     "purdue_level",
+     "is_critical"
+    ],
+    "declared_note": "S7(102) 가 오간 대역. 안전 중요로 선언 — 시연 랩이지만 제어 장비다",
+    "macs": [
+     "28:63:36:89:59:82"
+    ],
+    "packets": 84605,
+    "source": "pcap",
+    "type_hint": "plc",
+    "type_hint_reason": "제어용 포트 102 로 접속을 받았습니다",
+    "zonemap_sha256": "c410ae4bc06ec34d1d6f455cbbdbdd502a779fe1e10b7f49d89e18c24e7d1970"
+   },
+   "is_critical": true,
+   "label": "10.10.10.10",
+   "node_id": "10.10.10.10",
+   "node_type": "",
+   "purdue_level": 1.0,
+   "zone": "ICS 랩 제어망"
+  },
+  {
+   "evidence": {
+    "declared_by": "zonemap",
+    "declared_fields": [
+     "zone",
+     "purdue_level",
+     "is_critical"
+    ],
+    "declared_note": "S7(102) 가 오간 대역. 안전 중요로 선언 — 시연 랩이지만 제어 장비다",
+    "macs": [
+     "00:1C:06:27:64:11"
+    ],
+    "packets": 94859,
+    "source": "pcap",
+    "vendor_source": "MAC OUI — 랜카드 제조사이므로 모델은 알 수 없습니다",
+    "zonemap_sha256": "c410ae4bc06ec34d1d6f455cbbdbdd502a779fe1e10b7f49d89e18c24e7d1970"
+   },
+   "is_critical": true,
+   "label": "10.10.10.20",
+   "node_id": "10.10.10.20",
+   "node_type": "",
+   "purdue_level": 1.0,
+   "vendor_hint": "Siemens",
+   "zone": "ICS 랩 제어망"
+  },
+  {
+   "evidence": {
+    "declared_by": "zonemap",
+    "declared_fields": [
+     "zone",
+     "purdue_level",
+     "is_critical"
+    ],
+    "declared_note": "S7(102) 가 오간 대역. 안전 중요로 선언 — 시연 랩이지만 제어 장비다",
+    "macs": [
+     "54:EE:75:3F:4A:DB"
+    ],
+    "packets": 29476,
+    "source": "pcap",
+    "type_hint": "workstation",
+    "type_hint_reason": "제어용 포트 102 로 접속을 걸었습니다",
+    "zonemap_sha256": "c410ae4bc06ec34d1d6f455cbbdbdd502a779fe1e10b7f49d89e18c24e7d1970"
+   },
+   "is_critical": true,
+   "label": "10.10.10.30",
+   "node_id": "10.10.10.30",
+   "node_type": "",
+   "purdue_level": 1.0,
+   "zone": "ICS 랩 제어망"
+  },
+  {
+   "evidence": {
+    "declared_by": "zonemap",
+    "declared_fields": [
+     "zone",
+     "purdue_level",
+     "is_entry_point"
+    ],
+    "declared_note": "위 규칙에 안 걸린 전부. 먼저 쓴 규칙이 이기므로 이 줄은 맨 아래에 둔다",
+    "macs": [
+     "00:0A:DC:64:85:C2"
+    ],
+    "packets": 0,
+    "source": "pcap",
+    "zonemap_sha256": "c410ae4bc06ec34d1d6f455cbbdbdd502a779fe1e10b7f49d89e18c24e7d1970"
+   },
+   "is_entry_point": true,
+   "label": "17.253.34.253",
+   "node_id": "17.253.34.253",
+   "node_type": "",
+   "purdue_level": 5.0,
+   "zone": "외부 인터넷"
+  },
+  {
+   "evidence": {
+    "declared_by": "zonemap",
+    "declared_fields": [
+     "zone",
+     "purdue_level"
+    ],
+    "declared_note": "DNS·OpenVPN 이 보이는 사무망 성격 대역",
+    "macs": [
+     "00:07:7C:1A:61:83"
+    ],
+    "packets": 12407,
+    "source": "pcap",
+    "zonemap_sha256": "c410ae4bc06ec34d1d6f455cbbdbdd502a779fe1e10b7f49d89e18c24e7d1970"
+   },
+   "label": "192.168.88.1",
+   "node_id": "192.168.88.1",
+   "node_type": "",
+   "purdue_level": 4.0,
+   "zone": "행사 게스트망"
+  },
+  {
+   "evidence": {
+    "declared_by": "zonemap",
+    "declared_fields": [
+     "zone",
+     "purdue_level"
+    ],
+    "declared_note": "DNS·OpenVPN 이 보이는 사무망 성격 대역",
+    "macs": [
+     "28:CF:E9:18:B5:ED"
+    ],
+    "packets": 114,
+    "source": "pcap",
+    "zonemap_sha256": "c410ae4bc06ec34d1d6f455cbbdbdd502a779fe1e10b7f49d89e18c24e7d1970"
+   },
+   "label": "192.168.88.52",
+   "node_id": "192.168.88.52",
+   "node_type": "",
+   "purdue_level": 4.0,
+   "zone": "행사 게스트망"
+  },
+  {
+   "evidence": {
+    "declared_by": "zonemap",
+    "declared_fields": [
+     "zone",
+     "purdue_level"
+    ],
+    "declared_note": "DNS·OpenVPN 이 보이는 사무망 성격 대역",
+    "macs": [
+     "00:90:E8:27:8C:37"
+    ],
+    "packets": 12331,
+    "source": "pcap",
+    "vendor_source": "MAC OUI — 랜카드 제조사이므로 모델은 알 수 없습니다",
+    "zonemap_sha256": "c410ae4bc06ec34d1d6f455cbbdbdd502a779fe1e10b7f49d89e18c24e7d1970"
+   },
+   "label": "192.168.88.61",
+   "node_id": "192.168.88.61",
+   "node_type": "",
+   "purdue_level": 4.0,
+   "vendor_hint": "Moxa",
+   "zone": "행사 게스트망"
+  },
+  {
+   "evidence": {
+    "declared_by": "zonemap",
+    "declared_fields": [
+     "zone",
+     "purdue_level"
+    ],
+    "declared_note": "NTP·DNS 가 밖으로 나가는 대역",
+    "macs": [
+     "70:71:BC:3A:0D:E8"
+    ],
+    "packets": 2735,
+    "source": "pcap",
+    "zonemap_sha256": "c410ae4bc06ec34d1d6f455cbbdbdd502a779fe1e10b7f49d89e18c24e7d1970"
+   },
+   "label": "192.168.89.2",
+   "node_id": "192.168.89.2",
+   "node_type": "",
+   "purdue_level": 4.0,
+   "zone": "행사 게스트망"
+  },
+  {
+   "evidence": {
+    "declared_by": "zonemap",
+    "declared_fields": [
+     "zone",
+     "purdue_level",
+     "is_entry_point"
+    ],
+    "declared_note": "위 규칙에 안 걸린 전부. 먼저 쓴 규칙이 이기므로 이 줄은 맨 아래에 둔다",
+    "macs": [
+     "00:07:7C:1A:61:83"
+    ],
+    "packets": 0,
+    "source": "pcap",
+    "zonemap_sha256": "c410ae4bc06ec34d1d6f455cbbdbdd502a779fe1e10b7f49d89e18c24e7d1970"
+   },
+   "is_entry_point": true,
+   "label": "192.195.142.13",
+   "node_id": "192.195.142.13",
+   "node_type": "",
+   "purdue_level": 5.0,
+   "zone": "외부 인터넷"
+  },
+  {
+   "evidence": {
+    "declared_by": "zonemap",
+    "declared_fields": [
+     "zone",
+     "purdue_level",
+     "is_entry_point"
+    ],
+    "declared_note": "위 규칙에 안 걸린 전부. 먼저 쓴 규칙이 이기므로 이 줄은 맨 아래에 둔다",
+    "macs": [
+     "00:0A:DC:64:85:C2"
+    ],
+    "packets": 0,
+    "source": "pcap",
+    "zonemap_sha256": "c410ae4bc06ec34d1d6f455cbbdbdd502a779fe1e10b7f49d89e18c24e7d1970"
+   },
+   "is_entry_point": true,
+   "label": "8.8.8.8",
+   "node_id": "8.8.8.8",
+   "node_type": "",
+   "purdue_level": 5.0,
+   "zone": "외부 인터넷"
+  }
+ ],
+ "provenance": {
+  "attribution": "4SICS 2015 GeekLounge 캡처에서 파생. 원본 트래픽은 Netresec 가 공개했고 CS3Sthlm 이 랩을 꾸렸다 — https://www.netresec.com/?page=PCAP4SICS",
+  "derived_by": "otai capture (ADR-039) + otai zonemap (ADR-047)",
+  "not_a_plant": "컨퍼런스 시연 랩이다. 실제 장비의 실제 트래픽이지만 공장이 아니고, 192.168.88/89 는 행사 게스트망이다. 경로 탐지 정확도의 근거로 쓸 수 없다 (ADR-013 은 그대로 유효하다).",
+  "note": "관측된 통신만 담았습니다. 캡처는 시간 창이므로 여기 없는 경로가 없다는 뜻이 아닙니다. Purdue 레벨과 구역은 패킷에 없어 비어 있습니다 — 사용자가 채워야 합니다.",
+  "packets": 246137,
+  "sha256": "8c6ee02dc26b1b5298a7c9b4dc83cc779bd2a3219d5c5cbc51e3d4d325763bc2",
+  "source": "pcap",
+  "synthetic": false,
+  "unparsed": {
+   "IPv4 가 아님": 6870,
+   "TCP·UDP 가 아님": 2740
+  },
+  "what_is_observed": "엣지(통신)와 MAC·포트 단서는 **관측**이다. Purdue 레벨·구역·진입점은 `fixtures/topology/4sics-zones.json` 에서 사람이 **선언**한 값이다. 섞어 읽지 말 것.",
+  "window": [
+   "2015-10-20T15:10:34Z",
+   "2015-10-20T22:10:32Z"
+  ],
+  "zonemap": {
+   "declared_nodes": 10,
+   "note": "Purdue 레벨·구역·진입점은 **사람이 선언한 값**이고 캡처에서 관측한 것이 아닙니다. 통신(엣지)만 관측입니다.",
+   "rules": 4,
+   "sha256": "c410ae4bc06ec34d1d6f455cbbdbdd502a779fe1e10b7f49d89e18c24e7d1970",
+   "source": "4sics-zones.json"
+  }
+ }
+}
